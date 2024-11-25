@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import tracemalloc
 import time
 import logging
+import threading
 from sklearn.cluster import KMeans
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
@@ -125,6 +126,41 @@ class RecursiveSelfImprovementFramework:
     def integrate_tasks(self):
         return "\n".join(self.tasks)
 
+    def advanced_task_scoring(self, reference_task="optimize memory usage"):
+        """
+        Scores tasks dynamically using either transformers or TF-IDF.
+        """
+        try:
+            from sentence_transformers import SentenceTransformer, util
+            model = SentenceTransformer('all-MiniLM-L6-v2')
+            task_descriptions = [task.split("\n")[0] for task in self.tasks]
+            embeddings = model.encode(task_descriptions + [reference_task], convert_to_tensor=True)
+            similarity_scores = util.cos_sim(embeddings[-1], embeddings[:-1]).flatten()
+        except ImportError:
+            # Fall back to TF-IDF
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            from sklearn.metrics.pairwise import cosine_similarity
+            task_descriptions = [task.split("\n")[0] for task in self.tasks]
+            vectorizer = TfidfVectorizer()
+            vectors = vectorizer.fit_transform(task_descriptions + [reference_task])
+            similarity_scores = cosine_similarity(vectors[-1], vectors[:-1]).flatten()
+
+        scored_tasks = sorted(
+            zip(self.tasks, similarity_scores.tolist()), key=lambda x: x[1], reverse=True
+        )
+        self.tasks = [task for task, _ in scored_tasks]
+        return self.tasks
+
+    def runtime_feedback_integration(self, execution_results):
+        """
+        Integrates runtime feedback to refine task definitions.
+        """
+        for result in execution_results.get("results", []):
+            if "error" in result:
+                refinement = f"# Refinement based on runtime error: {result['error']}"
+                self.tasks.append(refinement)
+        return self.tasks
+
 # MetaFramework
 class MetaFramework:
     def __init__(self):
@@ -154,6 +190,31 @@ class HybridFramework:
         integrated_code = self.recursive_framework.integrate_tasks()
         return integrated_code, tasks
 
+    def parallel_task_execution(self, conversation_text, iterations=3):
+        """
+        Processes conversation text and executes tasks in parallel across threads.
+        """
+        results = []
+
+        def execute_task(task):
+            try:
+                exec(task)
+                return f"Executed: {task}"
+            except Exception as e:
+                return f"Error: {str(e)}"
+
+        for i in range(iterations):
+            threads = []
+            for task in self.recursive_framework.tasks:
+                thread = threading.Thread(target=lambda: results.append(execute_task(task)))
+                threads.append(thread)
+                thread.start()
+
+            for thread in threads:
+                thread.join()
+
+        return results
+
 # Running the Hybrid Framework
 conversation_text = """
 Develop dynamic parsing and integration capabilities for large-scale AI systems.
@@ -163,4 +224,10 @@ Implement real-time feedback for iterative refinement of tasks.
 
 hybrid_framework = HybridFramework()
 result = hybrid_framework.process_and_improve(conversation_text, iterations=3)
-result
+parallel_results = hybrid_framework.parallel_task_execution(conversation_text, iterations=2)
+
+enhanced_results = {
+    "integrated_code": result[0],
+    "tasks": result[1],
+    "parallel_execution_results": parallel_results
+}
