@@ -1,3 +1,5 @@
+import time
+import tracemalloc
 from datetime import datetime
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -163,3 +165,37 @@ class RecursiveSelfImprovementFramework:
             self.heuristic_semantic_subtask_extraction()
             self.integrate_advanced_nlp_models()
         return self.tasks
+
+    def monitor_scalability(self, task_description):
+        """
+        Monitors memory usage and task generation time for scalability testing.
+        """
+        tracemalloc.start()  # Start tracking memory usage
+        start_time = time.time()  # Start the timer
+
+        # Perform task refinement and integration
+        refined_tasks = self.process_conversation(task_description)
+        self.iterative_refinement_patterns(iterations=3)
+        integrated_system = self.integrate_tasks()
+
+        # Stop tracking and calculate performance metrics
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        performance_metrics = {
+            "execution_time": end_time - start_time,
+            "current_memory_usage": current / 10**6,  # Convert to MB
+            "peak_memory_usage": peak / 10**6,       # Convert to MB
+        }
+
+        return refined_tasks, integrated_system, performance_metrics
+
+    def feedback_loop_for_refinement(self, user_feedback):
+        """
+        Incorporates user feedback into task refinement for iterative improvement.
+        """
+        for feedback in user_feedback:
+            for i, task in enumerate(self.tasks):
+                if feedback['task'] in task and feedback['action'] == 'refine':
+                    self.tasks[i] = f"# Refined Task: {feedback['refinement']}"
