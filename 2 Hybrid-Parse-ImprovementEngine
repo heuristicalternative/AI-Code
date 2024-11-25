@@ -1,189 +1,131 @@
-from concurrent.futures import ThreadPoolExecutor
+import tracemalloc
+import time
+import logging
+from datetime import datetime, timedelta
 
-# System Registry for Subsystems
-class SystemRegistry:
-    def __init__(self):
-        self.registry = {}
+# Supporting RAGSystem
+class RAGSystem:
+    """Memory System for Feedback and Context Retention"""
+    def __init__(self, vector_store_path="vector_store"):
+        self.memory = []
 
-    def register_subsystem(self, name, instance, metadata):
-        if name in self.registry:
-            raise ValueError(f"Subsystem '{name}' is already registered.")
-        self.registry[name] = {"instance": instance, "metadata": metadata}
-        print(f"Subsystem '{name}' registered successfully.")
+    def add_to_memory(self, text, metadata=None):
+        self.memory.append({"text": text, "metadata": metadata or {"timestamp": datetime.now()}})
 
-    def validate_subsystem(self, name):
-        if name not in self.registry:
-            raise ValueError(f"Subsystem '{name}' is not registered.")
-        return f"Subsystem '{name}' validated successfully."
+    def retrieve_relevant(self, query, max_age_days=720):
+        cutoff_date = datetime.now() - timedelta(days=max_age_days)
+        return [
+            item["text"] for item in self.memory
+            if query.lower() in item["text"].lower() and item["metadata"]["timestamp"] > cutoff_date
+        ]
 
-    def list_subsystems(self):
-        return {name: meta["metadata"] for name, meta in self.registry.items()}
-
-
-class DistributedTaskExecutor:
-    def __init__(self, max_workers=5):
-        self.max_workers = max_workers
-        self.results = []
-        self.errors = []
-
-    def execute_tasks(self, tasks):
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = [executor.submit(task["function"], *task["args"]) for task in tasks]
-            for future in futures:
-                try:
-                    self.results.append({"result": future.result()})
-                except Exception as e:
-                    self.errors.append({"error": str(e)})
-        return {"results": self.results, "errors": self.errors}
+    def apply_feedback(self, feedback):
+        for item in feedback:
+            feedback_text = f"Feedback for task '{item['task']}': {item['refinement']}"
+            self.add_to_memory(feedback_text, {"source": "feedback"})
 
 
-class MetaProgrammingModule:
-    def __init__(self, system):
-        self.system = system
-
-    def analyze_results(self, results):
-        improvements = []
-        for result in results.get("results", []):
-            if "error" in result:
-                improvements.append(f"Fix error: {result['error']}")
-            elif "executing" in result["result"]:
-                improvements.append(f"Refine task output: {result['result']}")
-        return improvements
-
-    def generate_dynamic_prompts(self, improvements):
-        prompts = []
-        for improvement in improvements:
-            if "Fix error" in improvement:
-                prompts.append(f"Debug and fix: {improvement.split(': ')[1]}")
-            elif "Refine task output" in improvement:
-                prompts.append(f"Enhance execution logic for: {improvement.split(': ')[1]}")
-        return prompts
+class DualPlaceholderEnhancer:
+    """Generates functional or placeholder code snippets based on task descriptions."""
+    def enhance_task(self, task_description):
+        if "parse" in task_description.lower():
+            return f"# Code to parse data\ndef parse_data(): print('Parsing data...')"
+        elif "validate" in task_description.lower():
+            return f"# Code to validate configurations\ndef validate_config(): print('Validating configurations...')"
+        elif "suggest" in task_description.lower():
+            return f"# Code to suggest improvements\ndef suggest_improvements(): print('Suggesting improvements...')"
+        else:
+            return f"# Placeholder for task: {task_description}\ndef task_function(): pass"
 
 
-class RecursiveSelfImprovementFramework:
-    def __init__(self):
-        self.registry = SystemRegistry()
-        self.task_executor = DistributedTaskExecutor()
-        self.meta_programming = MetaProgrammingModule(self)
-        self.tasks = []
-
-    def process_conversation(self, conversation_text):
-        """
-        Parses conversation text and dynamically extracts tasks and subtasks.
-        """
-        chunks = conversation_text.split('.')
-        self.tasks = []  # Reset tasks to avoid duplication
-        for chunk in chunks:
-            task_description = chunk.strip()
-            if task_description:
-                if 'and' in task_description or 'then' in task_description:
-                    subtasks = task_description.split('and')
-                    for subtask in subtasks:
-                        self.tasks.append(f"# Subtask: {subtask.strip()}\ndef subtask_function(): pass")
-                else:
-                    self.tasks.append(f"# Task: {task_description}\ndef task_function(): pass")
-        return self.tasks
-
-    def integrate_tasks(self):
-        return "\n".join(self.tasks)
-
-    def advanced_task_scoring(self, reference_task="optimize memory usage"):
-        """
-        Prioritizes tasks using transformers or heuristic methods.
-        """
-        try:
-            from sentence_transformers import SentenceTransformer, util
-            model = SentenceTransformer('all-MiniLM-L6-v2')
-            task_descriptions = [task.split("\n")[0] for task in self.tasks]
-            embeddings = model.encode(task_descriptions + [reference_task], convert_to_tensor=True)
-            similarity_scores = util.cos_sim(embeddings[-1], embeddings[:-1]).flatten()
-
-            scored_tasks = sorted(
-                zip(self.tasks, similarity_scores.tolist()), key=lambda x: x[1], reverse=True
-            )
-            self.tasks = [task for task, _ in scored_tasks]
-            return {"tasks": self.tasks, "scores": similarity_scores.tolist()}
-        except ImportError:
-            return "sentence_transformers is not available. Falling back to heuristic methods."
-
-    def dynamic_feedback_loops(self, execution_results):
-        """
-        Integrates feedback dynamically to refine tasks during execution.
-        """
-        for result in execution_results:
-            if "Error:" in result:
-                refinement = f"# Feedback-based Refinement: {result}\ndef refinement_task(): pass"
-                self.tasks.append(refinement)
-            elif "Executed:" in result:
-                refinement = f"# Feedback-based Execution Enhancement: {result}\ndef enhanced_execution(): pass"
-                self.tasks.append(refinement)
-        return self.tasks
+class ModularIntegrator:
+    """Combines tasks and modules into a unified system."""
+    def integrate_modules(self, modules):
+        return "# Optimized Integrated System\n" + "\n".join(modules)
 
 
-class HybridFramework:
+class EnhancedHybridFrameworkWithIntegrationAndEnhancements:
     def __init__(self):
         self.recursive_framework = RecursiveSelfImprovementFramework()
         self.meta_framework = MetaProgrammingModule(self.recursive_framework)
+        self.rag_system = RAGSystem()
+        self.enhancer = DualPlaceholderEnhancer()
+        self.integrator = ModularIntegrator()
+        self.tasks = []
 
-    def process_and_improve(self, conversation_text, iterations=3):
-        tasks = self.recursive_framework.process_conversation(conversation_text)
-        for i in range(iterations):
-            results = {"results": [{"result": task} for task in tasks]}
-            improvements = self.meta_framework.analyze_results(results)
-            prompts = self.meta_framework.generate_dynamic_prompts(improvements)
-            for prompt in prompts:
-                tasks.append(f"# Prompt: {prompt}\ndef improvement_function(): pass")
+    # Batch Processing
+    def process_with_batching(self, conversation_text, batch_size=100):
+        tokens = conversation_text.split()
+        batches = [" ".join(tokens[i:i + batch_size]) for i in range(0, len(tokens), batch_size)]
+        batch_results = []
+
+        for batch in batches:
+            enhanced_tasks = self.recursive_framework.process_conversation(batch)
+            for task in enhanced_tasks:
+                self.tasks.append(self.enhancer.enhance_task(task))
+            batch_results.extend(enhanced_tasks)
+
+        return batch_results
+
+    # Resource Monitoring
+    def monitor_resources(self, task_description):
+        tracemalloc.start()
+        start_time = time.time()
+        processed_tasks = self.recursive_framework.process_conversation(task_description)
         integrated_code = self.recursive_framework.integrate_tasks()
-        return integrated_code, tasks
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
 
-    def parallel_task_execution(self, conversation_text, iterations=3):
-        """
-        Processes conversation text and executes tasks in parallel.
-        """
-        results = []
+        metrics = {
+            "execution_time": end_time - start_time,
+            "current_memory_usage_MB": current / 10**6,
+            "peak_memory_usage_MB": peak / 10**6
+        }
 
-        def execute_task(task):
-            try:
-                exec(task)
-                return f"Executed: {task}"
-            except Exception as e:
-                return f"Error: {str(e)}"
+        logging.info(f"Task Description: {task_description}")
+        logging.info(f"Metrics: {metrics}")
 
-        threads = []
-        tasks = self.recursive_framework.process_conversation(conversation_text)
-        for task in tasks:
-            for _ in range(iterations):
-                thread = threading.Thread(target=lambda: results.append(execute_task(task)))
-                threads.append(thread)
-                thread.start()
+        return metrics, processed_tasks, integrated_code
 
-        for thread in threads:
-            thread.join()
+    # Capability Recovery and Modular Integration
+    def detect_and_recover_capabilities(self, expected_capabilities):
+        missing_capabilities = [
+            capability for capability in expected_capabilities
+            if not any(capability in task.lower() for task in self.tasks)
+        ]
 
-        return results
+        for capability in missing_capabilities:
+            recovery_task = f"# Recovered Capability: {capability}\ndef {capability.replace(' ', '_')}(): pass"
+            self.tasks.append(recovery_task)
 
+        return missing_capabilities
 
-# Input for Testing
-conversation_text = """
-Develop advanced parsing logic to extract subtasks dynamically from deeply nested workflows.
-Test semantic scoring capabilities with sentence_transformers for task prioritization.
-Enable dynamic feedback loops for real-time task refinement.
-Ensure scalability with large and complex conversation threads.
-"""
+    def integrate_tasks(self):
+        return self.integrator.integrate_modules(self.tasks)
 
-hybrid_framework = HybridFramework()
+    # Feedback and Memory
+    def apply_feedback_with_memory(self, feedback_data):
+        self.rag_system.apply_feedback(feedback_data)
+        return self.rag_system.memory
 
-# Process the conversation text and validate task refinement and prioritization
-processed_results = hybrid_framework.process_and_improve(conversation_text, iterations=3)
+    # Dependency Management (NEW)
+    def map_dependencies(self):
+        """Maps and visualizes task dependencies."""
+        dependency_graph = {}
+        for task in self.tasks:
+            task_name = task.split("\n")[0].replace("# Task:", "").strip()
+            dependencies = [dep for dep in self.tasks if dep in task]
+            dependency_graph[task_name] = dependencies
+        return dependency_graph
 
-# Execute tasks in parallel to validate scalability and robustness
-parallel_results = hybrid_framework.parallel_task_execution(conversation_text, iterations=3)
-
-# Final Test Results
-final_test_results = {
-    "integrated_code": processed_results[0],
-    "tasks": processed_results[1],
-    "parallel_execution_results": parallel_results
-}
-
-final_test_results
+    # Dynamic Testing (NEW)
+    def generate_test_cases(self):
+        """Generates test cases for tasks and modules."""
+        test_cases = []
+        for task in self.tasks:
+            if "def" in task:
+                function_name = task.split("def ")[1].split("(")[0]
+                test_case = f"def test_{function_name}(): assert {function_name}() is not None"
+                test_cases.append(test_case)
+        return test_cases
