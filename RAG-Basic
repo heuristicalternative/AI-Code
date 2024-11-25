@@ -1,0 +1,162 @@
+from datetime import datetime, timedelta
+from langchain.vectorstores import FAISS
+from langchain.chains import ConversationalRetrievalChain
+from langchain.prompts import PromptTemplate
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.llms import OpenAI
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+
+class RAGSystem:
+    def __init__(self, vector_store_path="vector_store"):
+        # Initialize vector store
+        self.vector_store = FAISS.load_local(vector_store_path, OpenAIEmbeddings())
+        self.retriever = self.vector_store.as_retriever()
+
+        # Define prompt template for RAG
+        self.prompt_template = PromptTemplate(
+            input_variables=["context", "query"],
+            template="""
+            You are a helpful assistant. Use the following context: {context}
+            to answer the question: {query}.
+            """,
+        )
+        self.chain = ConversationalRetrievalChain(
+            retriever=self.retriever,
+            combine_documents_chain=self.prompt_template,
+            llm=OpenAI(model="gpt-4"),
+        )
+
+        # Session manager
+        self.session_manager = SessionManager()
+
+    def add_to_memory(self, text, metadata=None):
+        """
+        Adds text to the memory with optional metadata.
+        Metadata example: {"timestamp": datetime.now(), "source": "user_input"}
+        """
+        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        chunks = splitter.split_text(text)
+        for chunk in chunks:
+            self.vector_store.add_document(chunk, metadata or {"timestamp": datetime.now()})
+
+    def retrieve_relevant(self, query, max_age_days=30):
+        """
+        Retrieves context relevant to the query, filtered by age.
+        """
+        cutoff_date = datetime.now() - timedelta(days=max_age_days)
+        results = self.vector_store.search(query)
+        # Filter by timestamp in metadata
+        return [res for res in results if res.metadata.get("timestamp", datetime.min) > cutoff_date]
+
+    def generate_response(self, query, session_id=None):
+        """
+        Generate a response based on query and memory context.
+        Includes session history if session_id is provided.
+        """
+        memory_context = self.retrieve_relevant(query)
+        session_context = self.session_manager.get_context(session_id)
+
+        # Combine session history with retrieved memory
+        context = session_context + memory_context
+        return self.chain.run({"context": context, "query": query})
+
+    def collect_feedback(self, query, response, rating, session_id=None):
+        """
+        Collects feedback for system optimization.
+        """
+        feedback = {
+            "query": query,
+            "response": response,
+            "rating": rating,
+            "timestamp": datetime.now(),
+            "session_id": session_id,
+        }
+        self.add_to_memory(str(feedback), {"source": "feedback"})
+        self.session_manager.add_feedback(session_id, feedback)
+
+    def analyze_feedback(self):
+        """
+        Analyzes feedback to optimize system performance.
+        """
+        feedback_data = self.session_manager.get_all_feedback()
+        # Perform advanced analysis (e.g., trends in ratings, recurring issues)
+        positive_feedback = [f for f in feedback_data if f["rating"] >= 4]
+        negative_feedback = [f for f in feedback_data if f["rating"] < 4]
+        
+        analysis = {
+            "total_feedback": len(feedback_data),
+            "positive_feedback": len(positive_feedback),
+            "negative_feedback": len(negative_feedback),
+        }
+        return analysis
+
+    def save_state(self, path="vector_store"):
+        """
+        Save the current state of the vector store.
+        """
+        self.vector_store.save_local(path)
+
+
+class SessionManager:
+    """
+    Manages user sessions, tracking conversation history and feedback.
+    """
+    def __init__(self):
+        self.sessions = {}
+
+    def start_session(self, session_id):
+        if session_id not in self.sessions:
+            self.sessions[session_id] = {
+                "history": [],
+                "feedback": [],
+            }
+
+    def add_context(self, session_id, user_input, response):
+        self.start_session(session_id)
+        self.sessions[session_id]["history"].append({"user_input": user_input, "response": response})
+
+    def get_context(self, session_id):
+        if session_id in self.sessions:
+            return "\n".join(
+                f"User: {entry['user_input']}\nAssistant: {entry['response']}"
+                for entry in self.sessions[session_id]["history"]
+            )
+        return ""
+
+    def add_feedback(self, session_id, feedback):
+        self.start_session(session_id)
+        self.sessions[session_id]["feedback"].append(feedback)
+
+    def get_all_feedback(self):
+        feedback = []
+        for session in self.sessions.values():
+            feedback.extend(session["feedback"])
+        return feedback
+
+
+# Usage Example
+if __name__ == "__main__":
+    system = RAGSystem()
+    session_id = "user1"
+
+    # Start a new session
+    system.session_manager.start_session(session_id)
+
+    # Add knowledge to memory
+    system.add_to_memory("The capital of France is Paris.")
+
+    # Query the system
+    user_query = "What is the capital of France?"
+    response = system.generate_response(user_query, session_id=session_id)
+    print("Response:", response)
+
+    # Collect feedback
+    system.collect_feedback(user_query, response, rating=5, session_id=session_id)
+
+    # View feedback analysis
+    analysis = system.analyze_feedback()
+    print("Feedback Analysis:", analysis)
+
+    # Save state
+    system.save_state()
