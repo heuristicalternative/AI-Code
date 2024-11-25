@@ -1,57 +1,91 @@
 import time
 import tracemalloc
-from datetime import datetime
+from datetime import datetime, timedelta
 import networkx as nx
 import matplotlib.pyplot as plt
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
+from langchain.vectorstores import FAISS
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-# Dual Placeholder Enhancer
+# RAG System for Contextual Retrieval
+class RAGSystem:
+    def __init__(self, vector_store_path="vector_store"):
+        self.vector_store = FAISS.load_local(vector_store_path, OpenAIEmbeddings())
+
+    def add_to_memory(self, text, metadata=None):
+        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        chunks = splitter.split_text(text)
+        for chunk in chunks:
+            self.vector_store.add_document(chunk, metadata or {"timestamp": datetime.now()})
+
+    def retrieve_relevant(self, query, max_age_days=30):
+        cutoff_date = datetime.now() - timedelta(days=max_age_days)
+        results = self.vector_store.search(query)
+        return [res for res in results if res.metadata.get("timestamp", datetime.min) > cutoff_date]
+
+# Recursive Self-Improvement Framework with RAG Integration
+class RecursiveSelfImprovementFramework:
+    def __init__(self):
+        self.parser = ScalableParser()
+        self.enhancer = DualPlaceholderEnhancer()
+        self.integrator = ModularIntegrator()
+        self.ontology_graph = OntologyKnowledgeGraph()
+        self.rag_system = RAGSystem()
+        self.tasks = []
+
+    def process_conversation(self, conversation_text):
+        chunks = self.parser.parse_large_text(conversation_text)
+        for chunk in chunks:
+            enhanced_task = self.enhancer.enhance_task(chunk)
+            self.ontology_graph.add_task(chunk, enhanced_task)
+            self.tasks.append(enhanced_task)
+        return self.tasks
+
+    def integrate_tasks(self):
+        return self.integrator.integrate_modules(self.tasks)
+
+    def retrieve_and_refine_with_rag(self, query):
+        context = self.rag_system.retrieve_relevant(query)
+        for ctx in context:
+            self.process_conversation(ctx)
+
+    def feedback_loop_for_refinement(self, user_feedback):
+        for feedback in user_feedback:
+            for i, task in enumerate(self.tasks):
+                if feedback['task'] in task and feedback['action'] == 'refine':
+                    self.tasks[i] = f"# Refined Task: {feedback['refinement']}"
+
+    def monitor_scalability(self, task_description):
+        tracemalloc.start()
+        start_time = time.time()
+        self.process_conversation(task_description)
+        self.integrate_tasks()
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        return {"execution_time": end_time - start_time, "memory_usage": current / 10**6, "peak_memory": peak / 10**6}
+
+# Supporting Modules
+class ScalableParser:
+    def parse_large_text(self, text, max_tokens=500):
+        tokens = text.split()
+        return [" ".join(tokens[i:i + max_tokens]) for i in range(0, len(tokens), max_tokens)]
+
 class DualPlaceholderEnhancer:
     def enhance_task(self, task_description):
         if "parse" in task_description.lower():
             return f"# Code to parse data\ndef parse_data(): print('Parsing data...')"
         elif "validate" in task_description.lower():
             return f"# Code to validate configurations\ndef validate_config(): print('Validating configurations...')"
-        elif "suggest" in task_description.lower():
-            return f"# Code to suggest improvements\ndef suggest_improvements(): print('Suggesting improvements...')"
         else:
             return f"# Placeholder for task: {task_description}\ndef task_function(): pass"
 
-# Resilient Recursive Logic
-class ResilientRecursiveLogic:
-    def suggest_recursion(self, logic_graph):
-        suggestions = []
-        for task_id, details in logic_graph.items():
-            if "placeholder" in details["description"].lower():
-                suggestions.append(f"Consider refining or expanding {task_id}")
-        return suggestions
-
-# Scalable Parser
-class ScalableParser:
-    def parse_large_text(self, text, max_tokens=500):
-        tokens = text.split()
-        chunks = [" ".join(tokens[i:i + max_tokens]) for i in range(0, len(tokens), max_tokens)]
-        return chunks
-
-# Modular Integrator
 class ModularIntegrator:
     def integrate_modules(self, modules):
-        unique_modules = list(dict.fromkeys(modules))  # Remove duplicates
-        return f"# Optimized Integrated System\n{'\n'.join(unique_modules)}"
+        return f"# Optimized Integrated System\n{'\n'.join(modules)}"
 
-# Failsafes and Node Backups
-class NodeBackupManager:
-    def __init__(self):
-        self.backups = {}
-
-    def save_node(self, node_id, data):
-        self.backups[node_id] = data
-
-    def restore_node(self, node_id):
-        return self.backups.get(node_id, "Backup not available.")
-
-# Ontology Knowledge Graph
 class OntologyKnowledgeGraph:
     def __init__(self):
         self.graph = nx.DiGraph()
@@ -59,143 +93,6 @@ class OntologyKnowledgeGraph:
     def add_task(self, task_id, description, capabilities=["general_capability"]):
         self.graph.add_node(task_id, description=description, capabilities=capabilities)
 
-    def add_relationship(self, task_id_1, task_id_2, relationship="depends_on"):
-        self.graph.add_edge(task_id_1, task_id_2, relationship=relationship)
-
     def visualize_graph(self):
-        pos = nx.spring_layout(self.graph)
-        nx.draw(self.graph, pos, with_labels=True, node_size=2000, font_size=10)
+        nx.draw(self.graph, with_labels=True, node_size=2000, font_size=10)
         plt.show()
-
-# Recursive Self-Improvement Framework
-class RecursiveSelfImprovementFramework:
-    def __init__(self):
-        self.parser = ScalableParser()
-        self.enhancer = DualPlaceholderEnhancer()
-        self.refiner = ResilientRecursiveLogic()
-        self.integrator = ModularIntegrator()
-        self.backup_manager = NodeBackupManager()
-        self.ontology_graph = OntologyKnowledgeGraph()
-        self.tasks = []
-
-    def process_conversation(self, conversation_text):
-        """
-        Processes the conversation text to parse intents and refine tasks.
-        """
-        chunks = self.parser.parse_large_text(conversation_text)
-        refined_tasks = []
-
-        for chunk in chunks:
-            enhanced_task = self.enhancer.enhance_task(chunk)
-            self.backup_manager.save_node(chunk, enhanced_task)
-            self.ontology_graph.add_task(chunk, enhanced_task)
-            refined_tasks.append(enhanced_task)
-
-        self.tasks.extend(refined_tasks)
-        return refined_tasks
-
-    def integrate_tasks(self):
-        """
-        Integrates all refined tasks into a single output system.
-        """
-        return self.integrator.integrate_modules(self.tasks)
-
-    def visualize_ontology(self):
-        """
-        Visualizes the ontology graph to understand task relationships.
-        """
-        self.ontology_graph.visualize_graph()
-
-    def heuristic_semantic_subtask_extraction(self):
-        """
-        Refines abstract placeholders into actionable subtasks using heuristic rules.
-        """
-        refined_tasks = []
-        for task in self.tasks:
-            if "placeholder" in task.lower():
-                if "parse" in task.lower():
-                    refined_tasks.append("# Subtask: Develop advanced parsing for complex datasets")
-                elif "validate" in task.lower():
-                    refined_tasks.append("# Subtask: Validate configurations dynamically")
-                elif "suggest" in task.lower():
-                    refined_tasks.append("# Subtask: Suggest CPU and memory optimizations")
-                elif "enhance" in task.lower():
-                    refined_tasks.append("# Subtask: Integrate task orchestration enhancements")
-                else:
-                    refined_tasks.append("# Subtask: Expand abstract task into discrete steps")
-            else:
-                refined_tasks.append(task)
-
-        self.tasks = refined_tasks
-        return refined_tasks
-
-    def integrate_advanced_nlp_models(self):
-        """
-        Uses a transformer-based model to derive subtasks dynamically from placeholders.
-        """
-        tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-        model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=3)
-
-        refined_tasks = []
-        for task in self.tasks:
-            if "placeholder" in task.lower():
-                inputs = tokenizer(task, return_tensors="pt", truncation=True, padding=True)
-                outputs = model(**inputs)
-                scores = torch.nn.functional.softmax(outputs.logits, dim=1)
-                predicted_label = torch.argmax(scores).item()
-
-                if predicted_label == 0:
-                    refined_tasks.append("# Subtask: Parsing-related refinement")
-                elif predicted_label == 1:
-                    refined_tasks.append("# Subtask: Validation-related refinement")
-                elif predicted_label == 2:
-                    refined_tasks.append("# Subtask: Optimization-related refinement")
-                else:
-                    refined_tasks.append("# Subtask: General refinement")
-            else:
-                refined_tasks.append(task)
-        self.tasks = refined_tasks
-        return refined_tasks
-
-    def iterative_refinement_patterns(self, iterations=3):
-        """
-        Refines tasks iteratively over a specified number of iterations.
-        """
-        for _ in range(iterations):
-            self.heuristic_semantic_subtask_extraction()
-            self.integrate_advanced_nlp_models()
-        return self.tasks
-
-    def monitor_scalability(self, task_description):
-        """
-        Monitors memory usage and task generation time for scalability testing.
-        """
-        tracemalloc.start()  # Start tracking memory usage
-        start_time = time.time()  # Start the timer
-
-        # Perform task refinement and integration
-        refined_tasks = self.process_conversation(task_description)
-        self.iterative_refinement_patterns(iterations=3)
-        integrated_system = self.integrate_tasks()
-
-        # Stop tracking and calculate performance metrics
-        end_time = time.time()
-        current, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-
-        performance_metrics = {
-            "execution_time": end_time - start_time,
-            "current_memory_usage": current / 10**6,  # Convert to MB
-            "peak_memory_usage": peak / 10**6,       # Convert to MB
-        }
-
-        return refined_tasks, integrated_system, performance_metrics
-
-    def feedback_loop_for_refinement(self, user_feedback):
-        """
-        Incorporates user feedback into task refinement for iterative improvement.
-        """
-        for feedback in user_feedback:
-            for i, task in enumerate(self.tasks):
-                if feedback['task'] in task and feedback['action'] == 'refine':
-                    self.tasks[i] = f"# Refined Task: {feedback['refinement']}"
