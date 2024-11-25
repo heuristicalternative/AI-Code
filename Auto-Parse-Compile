@@ -1,6 +1,7 @@
 from datetime import datetime
 import networkx as nx
 import matplotlib.pyplot as plt
+from transformers import pipeline  # For semantic extraction
 
 # Dual Placeholder Enhancer
 class DualPlaceholderEnhancer:
@@ -14,40 +15,7 @@ class DualPlaceholderEnhancer:
         else:
             return f"# Placeholder for task: {task_description}\ndef task_function(): pass"
 
-# Resilient Recursive Logic
-class ResilientRecursiveLogic:
-    def suggest_recursion(self, logic_graph):
-        suggestions = []
-        for task_id, details in logic_graph.items():
-            if "placeholder" in details["description"].lower():
-                suggestions.append(f"Consider refining or expanding {task_id}")
-        return suggestions
-
-# Scalable Parser
-class ScalableParser:
-    def parse_large_text(self, text, max_tokens=500):
-        tokens = text.split()
-        chunks = [" ".join(tokens[i:i + max_tokens]) for i in range(0, len(tokens), max_tokens)]
-        return chunks
-
-# Modular Integrator
-class ModularIntegrator:
-    def integrate_modules(self, modules):
-        unique_modules = list(dict.fromkeys(modules))  # Remove duplicates
-        return f"# Optimized Integrated System\n{'\n'.join(unique_modules)}"
-
-# Failsafes and Node Backups
-class NodeBackupManager:
-    def __init__(self):
-        self.backups = {}
-
-    def save_node(self, node_id, data):
-        self.backups[node_id] = data
-
-    def restore_node(self, node_id):
-        return self.backups.get(node_id, "Backup not available.")
-
-# Ontology Knowledge Graph
+# Ontology Knowledge Graph with Multi-Level Relationships
 class OntologyKnowledgeGraph:
     def __init__(self):
         self.graph = nx.DiGraph()
@@ -58,21 +26,24 @@ class OntologyKnowledgeGraph:
     def add_relationship(self, task_id_1, task_id_2, relationship="depends_on"):
         self.graph.add_edge(task_id_1, task_id_2, relationship=relationship)
 
+    def add_multi_level_relationship(self, task_id_1, task_id_2, relationship_type):
+        self.graph.add_edge(task_id_1, task_id_2, relationship=relationship_type)
+
     def visualize_graph(self):
         pos = nx.spring_layout(self.graph)
+        labels = nx.get_edge_attributes(self.graph, 'relationship')
         nx.draw(self.graph, pos, with_labels=True, node_size=2000, font_size=10)
+        nx.draw_networkx_edge_labels(self.graph, pos, edge_labels=labels)
         plt.show()
 
-# Recursive Self-Improvement Framework
+# Recursive Self-Improvement Framework with Semantic Subtask Extraction
 class RecursiveSelfImprovementFramework:
     def __init__(self):
         self.parser = ScalableParser()
         self.enhancer = DualPlaceholderEnhancer()
-        self.refiner = ResilientRecursiveLogic()
-        self.integrator = ModularIntegrator()
-        self.backup_manager = NodeBackupManager()
         self.ontology_graph = OntologyKnowledgeGraph()
         self.tasks = []
+        self.semantic_extractor = pipeline("text-classification", model="distilbert-base-uncased")
 
     def process_conversation(self, conversation_text):
         """
@@ -83,72 +54,39 @@ class RecursiveSelfImprovementFramework:
 
         for chunk in chunks:
             enhanced_task = self.enhancer.enhance_task(chunk)
-            self.backup_manager.save_node(chunk, enhanced_task)
-            self.ontology_graph.add_task(chunk, enhanced_task)
+            self.ontology_graph.add_task(f"Task_{len(self.tasks) + 1}", enhanced_task)
             refined_tasks.append(enhanced_task)
 
         self.tasks.extend(refined_tasks)
         return refined_tasks
 
-    def integrate_tasks(self):
+    def extract_subtasks(self, abstract_description):
         """
-        Integrates all refined tasks into a single output system.
+        Uses a language model to extract semantic subtasks from abstract descriptions.
         """
-        return self.integrator.integrate_modules(self.tasks)
+        responses = self.semantic_extractor(abstract_description, return_all_scores=False)
+        subtasks = [f"# Subtask: {response['label']} - {abstract_description}" for response in responses]
+        return subtasks
 
-    def visualize_ontology(self):
-        """
-        Visualizes the ontology graph to understand task relationships.
-        """
-        self.ontology_graph.visualize_graph()
-
-    def enhanced_iterative_refinement(self, max_iterations=3):
-        """
-        Iteratively refines abstract placeholders into actionable steps using heuristics.
-        """
-        refined_iterations = []
-        for task in self.tasks:
-            for _ in range(max_iterations):
-                if "placeholder" in task.lower():
-                    if "parse" in task.lower():
-                        task = "# Code to parse data logs\ndef parse_data_logs(): print('Parsing data logs...')"
-                    elif "validate" in task.lower():
-                        task = "# Code to validate configurations\ndef validate_config(): print('Validating configurations...')"
-                    elif "suggest" in task.lower():
-                        task = "# Code to suggest improvements\ndef suggest_improvements(): print('Suggesting improvements...')"
-                    else:
-                        task = task.replace("placeholder", "refined")
-                refined_iterations.append(task)
-        self.tasks = refined_iterations
-        return refined_iterations
-
-    def dynamic_placeholder_breakdown(self):
-        """
-        Refines abstract placeholders into discrete subtasks and actionable components.
-        """
-        broken_down_tasks = []
-        for task in self.tasks:
-            if "refined" in task.lower() or "placeholder" in task.lower():
-                if "framework" in task.lower():
-                    broken_down_tasks.append("# Task: Design data structures")
-                    broken_down_tasks.append("# Task: Implement parsing logic")
-                    broken_down_tasks.append("# Task: Create a modular system")
-                elif "system" in task.lower():
-                    broken_down_tasks.append("# Task: Integrate system components")
-                    broken_down_tasks.append("# Task: Validate system performance")
-                else:
-                    broken_down_tasks.append(task.replace("placeholder", "refined task step"))
-            else:
-                broken_down_tasks.append(task)
-        self.tasks = broken_down_tasks
-        return broken_down_tasks
-
-    def automate_ontology_relationships(self):
+    def automate_relationships(self):
         """
         Automatically adds relationships between tasks based on task descriptions.
         """
         task_ids = [f"Task_{i}" for i, _ in enumerate(self.tasks, start=1)]
         for i in range(len(task_ids) - 1):
             self.ontology_graph.add_relationship(task_ids[i], task_ids[i + 1], "depends_on")
-        for i in range(1, len(task_ids) - 1):
-            self.ontology_graph.add_relationship(task_ids[i], task_ids[i + 1], "is_subtask_of")
+            if i % 2 == 0:  # Example: Add multi-level relationships
+                self.ontology_graph.add_multi_level_relationship(task_ids[i], task_ids[i + 1], "enhances")
+
+    def integrate_tasks(self):
+        """
+        Integrates all refined tasks into a single output system.
+        """
+        unique_tasks = list(dict.fromkeys(self.tasks))  # Remove duplicates
+        return f"# Integrated System\n{'\n'.join(unique_tasks)}"
+
+    def visualize_ontology(self):
+        """
+        Visualizes the ontology graph with relationships.
+        """
+        self.ontology_graph.visualize_graph()
