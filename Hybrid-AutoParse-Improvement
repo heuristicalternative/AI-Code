@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+import threading
 
 # System Registry for Subsystems
 class SystemRegistry:
@@ -161,29 +162,3 @@ class HybridFramework:
             thread.join()
 
         return results
-
-
-# Input for Testing
-conversation_text = """
-Develop advanced parsing logic to extract subtasks dynamically from deeply nested workflows.
-Test semantic scoring capabilities with sentence_transformers for task prioritization.
-Enable dynamic feedback loops for real-time task refinement.
-Ensure scalability with large and complex conversation threads.
-"""
-
-hybrid_framework = HybridFramework()
-
-# Process the conversation text and validate task refinement and prioritization
-processed_results = hybrid_framework.process_and_improve(conversation_text, iterations=3)
-
-# Execute tasks in parallel to validate scalability and robustness
-parallel_results = hybrid_framework.parallel_task_execution(conversation_text, iterations=3)
-
-# Final Test Results
-final_test_results = {
-    "integrated_code": processed_results[0],
-    "tasks": processed_results[1],
-    "parallel_execution_results": parallel_results
-}
-
-final_test_results
