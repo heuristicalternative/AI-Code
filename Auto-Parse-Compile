@@ -102,17 +102,14 @@ class RecursiveSelfImprovementFramework:
         """
         self.ontology_graph.visualize_graph()
 
-# Example Execution
-if __name__ == "__main__":
-    conversation_text = """
-    To develop a resilient, efficient, and resource-conscious framework capable of parsing, integrating, and scaling modular systems step-by-step.
-    The framework should focus on delivering critical results, avoiding resource depletion, and incorporating failsafes for robustness and adaptability.
-    """
-    framework = RecursiveSelfImprovementFramework()
-    refined_tasks = framework.process_conversation(conversation_text)
-    print("\nRefined Tasks:", refined_tasks)
-
-    integrated_system = framework.integrate_tasks()
-    print("\nIntegrated System:\n", integrated_system)
-
-    framework.visualize_ontology()
+    def iterative_refinement(self, max_iterations=3):
+        """
+        Iteratively refines abstract placeholders into actionable steps.
+        """
+        refined_iterations = []
+        for task in self.tasks:
+            for _ in range(max_iterations):
+                if "placeholder" in task.lower():
+                    task = task.replace("placeholder", "refined")
+                refined_iterations.append(task)
+        return refined_iterations
