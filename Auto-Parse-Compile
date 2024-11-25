@@ -7,6 +7,7 @@ import logging
 # Configure logging for resource monitoring
 logging.basicConfig(filename='resource_monitor.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
+# Supporting RAGSystem
 class RAGSystem:
     def __init__(self, vector_store_path="vector_store"):
         self.memory = []
@@ -26,6 +27,7 @@ class RAGSystem:
             feedback_text = f"Feedback for task '{item['task']}': {item['refinement']}"
             self.add_to_memory(feedback_text, {"source": "feedback"})
 
+# Supporting Modules
 class ScalableParser:
     def parse_large_text(self, text, max_tokens=500):
         tokens = text.split()
@@ -46,6 +48,7 @@ class ModularIntegrator:
     def integrate_modules(self, modules):
         return "# Optimized Integrated System\n" + "\n".join(modules)
 
+# Main Framework
 class RecursiveSelfImprovementFramework:
     def __init__(self):
         self.parser = ScalableParser()
@@ -116,19 +119,39 @@ class RecursiveSelfImprovementFramework:
                     tested_capabilities.append((task, f"Test Failed: {str(e)}"))
         return tested_capabilities
 
-    def prioritize_tasks(self):
-        task_scores = []
-        for task in self.tasks:
-            score = 0
-            if "parse" in task.lower():
-                score += 5
-            if "validate" in task.lower():
-                score += 3
-            if "suggest" in task.lower():
-                score += 2
-            task_scores.append((task, score))
+    def advanced_task_scoring(self, reference_task="optimize memory usage"):
+        """
+        Scores tasks dynamically using either transformers or TF-IDF.
+        """
+        try:
+            from sentence_transformers import SentenceTransformer, util
+            model = SentenceTransformer('all-MiniLM-L6-v2')
+            task_descriptions = [task.split("\n")[0] for task in self.tasks]
+            embeddings = model.encode(task_descriptions + [reference_task], convert_to_tensor=True)
+            similarity_scores = util.cos_sim(embeddings[-1], embeddings[:-1]).flatten()
+        except ImportError:
+            # Fall back to TF-IDF
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            from sklearn.metrics.pairwise import cosine_similarity
+            task_descriptions = [task.split("\n")[0] for task in self.tasks]
+            vectorizer = TfidfVectorizer()
+            vectors = vectorizer.fit_transform(task_descriptions + [reference_task])
+            similarity_scores = cosine_similarity(vectors[-1], vectors[:-1]).flatten()
 
-        self.tasks = [task for task, _ in sorted(task_scores, key=lambda x: x[1], reverse=True)]
+        scored_tasks = sorted(
+            zip(self.tasks, similarity_scores.tolist()), key=lambda x: x[1], reverse=True
+        )
+        self.tasks = [task for task, _ in scored_tasks]
+        return self.tasks
+
+    def automate_feedback_loop(self, feedback_data):
+        """
+        Automatically collects and integrates feedback into tasks.
+        """
+        for feedback in feedback_data:
+            for i, task in enumerate(self.tasks):
+                if feedback['task'] in task:
+                    self.tasks[i] = f"# Auto Feedback: {feedback['refinement']}\n" + task
         return self.tasks
 
     def monitor_resources_with_logging(self, task_description):
