@@ -224,27 +224,21 @@ class HybridFramework:
 
         return results
 
-# Testing the Hybrid Framework with Cross-Thread Validation
+# Testing with Nested Tasks
 conversation_text = """
-Validate cross-thread communication and task synchronization.
-Enable semantic scoring and prioritize tasks effectively.
-Test the framework with larger, nested conversation threads.
+Develop advanced parsing logic to extract subtasks dynamically from deeply nested workflows.
+Test semantic scoring capabilities with sentence_transformers for task prioritization.
+Enable dynamic feedback loops for real-time task refinement.
 """
 
-# Initialize the Hybrid Framework
 hybrid_framework = HybridFramework()
 
-# Process and validate cross-thread enhancements
-result = hybrid_framework.process_and_improve(conversation_text, iterations=3)
+# Process the conversation and validate the framework
+processed_results = hybrid_framework.process_and_improve(conversation_text, iterations=3)
+parallel_results = hybrid_framework.parallel_task_execution(conversation_text, iterations=2)
 
-# Execute tasks in parallel for scalability testing
-parallel_results = hybrid_framework.parallel_task_execution(conversation_text, iterations=3)
-
-# Collect the results
-validation_results = {
-    "integrated_code": result[0],
-    "tasks": result[1],
+{
+    "integrated_code": processed_results[0],
+    "tasks": processed_results[1],
     "parallel_execution_results": parallel_results
 }
-
-validation_results
