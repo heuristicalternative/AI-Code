@@ -2,6 +2,9 @@ import tracemalloc
 import time
 import logging
 from datetime import datetime, timedelta
+import networkx as nx
+import matplotlib.pyplot as plt
+
 
 # Supporting RAGSystem
 class RAGSystem:
@@ -44,7 +47,7 @@ class ModularIntegrator:
         return "# Optimized Integrated System\n" + "\n".join(modules)
 
 
-class EnhancedHybridFrameworkWithIntegrationAndEnhancements:
+class EnhancedHybridFrameworkWithDependencyVisualization:
     def __init__(self):
         self.recursive_framework = RecursiveSelfImprovementFramework()
         self.meta_framework = MetaProgrammingModule(self.recursive_framework)
@@ -109,7 +112,7 @@ class EnhancedHybridFrameworkWithIntegrationAndEnhancements:
         self.rag_system.apply_feedback(feedback_data)
         return self.rag_system.memory
 
-    # Dependency Management (NEW)
+    # Dependency Management
     def map_dependencies(self):
         """Maps and visualizes task dependencies."""
         dependency_graph = {}
@@ -119,7 +122,32 @@ class EnhancedHybridFrameworkWithIntegrationAndEnhancements:
             dependency_graph[task_name] = dependencies
         return dependency_graph
 
-    # Dynamic Testing (NEW)
+    def visualize_dependencies(self):
+        """Visualize the dependency graph of tasks using NetworkX."""
+        dependency_graph = self.map_dependencies()
+        G = nx.DiGraph()
+
+        # Add nodes and edges to the graph
+        for task, dependencies in dependency_graph.items():
+            G.add_node(task)
+            for dependency in dependencies:
+                G.add_edge(dependency, task)
+
+        # Plot the graph
+        plt.figure(figsize=(12, 8))
+        nx.draw(
+            G,
+            with_labels=True,
+            node_color='lightblue',
+            font_weight='bold',
+            font_size=10,
+            edge_color='gray',
+            node_size=2000
+        )
+        plt.title("Task Dependency Graph")
+        plt.show()
+
+    # Dynamic Testing
     def generate_test_cases(self):
         """Generates test cases for tasks and modules."""
         test_cases = []
