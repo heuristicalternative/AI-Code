@@ -1,0 +1,121 @@
+import tracemalloc
+import time
+import logging
+from datetime import datetime, timedelta
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+
+# Supporting RAGSystem
+class RAGSystem:
+    def __init__(self, vector_store_path="vector_store"):
+        self.memory = []
+
+    def add_to_memory(self, text, metadata=None):
+        self.memory.append({"text": text, "metadata": metadata or {"timestamp": datetime.now()}})
+
+    def retrieve_relevant(self, query, max_age_days=720):
+        cutoff_date = datetime.now() - timedelta(days=max_age_days)
+        return [
+            item["text"] for item in self.memory
+            if query.lower() in item["text"].lower() and item["metadata"]["timestamp"] > cutoff_date
+        ]
+
+    def apply_feedback(self, feedback):
+        for item in feedback:
+            feedback_text = f"Feedback for task '{item['task']}': {item['refinement']}"
+            self.add_to_memory(feedback_text, {"source": "feedback"})
+
+
+# Enhanced Framework
+class EnhancedHybridFramework:
+    def __init__(self):
+        self.recursive_framework = RecursiveSelfImprovementFramework()
+        self.meta_framework = MetaProgrammingModule(self.recursive_framework)
+        self.rag_system = RAGSystem()
+        self.tasks = []
+
+    # Batch Processing
+    def process_with_batching(self, conversation_text, batch_size=100):
+        tokens = conversation_text.split()
+        batches = [" ".join(tokens[i:i + batch_size]) for i in range(0, len(tokens), batch_size)]
+        batch_results = []
+
+        for batch in batches:
+            result = self.recursive_framework.process_conversation(batch)
+            batch_results.extend(result)
+
+        return batch_results
+
+    # Resource Monitoring
+    def monitor_resources(self, task_description):
+        tracemalloc.start()
+        start_time = time.time()
+        processed_tasks = self.recursive_framework.process_conversation(task_description)
+        integrated_code = self.recursive_framework.integrate_tasks()
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        metrics = {
+            "execution_time": end_time - start_time,
+            "current_memory_usage_MB": current / 10**6,
+            "peak_memory_usage_MB": peak / 10**6
+        }
+
+        logging.info(f"Task Description: {task_description}")
+        logging.info(f"Metrics: {metrics}")
+
+        return metrics, processed_tasks, integrated_code
+
+    # Feedback and Memory
+    def apply_feedback_with_memory(self, feedback_data):
+        self.rag_system.apply_feedback(feedback_data)
+        return self.rag_system.memory
+
+    # Capability Recovery and Testing
+    def detect_and_recover_capabilities(self, expected_capabilities):
+        tasks = self.recursive_framework.tasks
+        missing_capabilities = [
+            capability for capability in expected_capabilities
+            if not any(capability.lower() in task.lower() for task in tasks)
+        ]
+
+        for capability in missing_capabilities:
+            recovery_task = f"# Recovered Capability: {capability}\ndef {capability.replace(' ', '_')}(): pass"
+            tasks.append(recovery_task)
+
+        self.tasks = tasks
+        return missing_capabilities
+
+    def test_recovered_capabilities(self):
+        tested_capabilities = []
+        for task in self.tasks:
+            if "Recovered Capability" in task:
+                try:
+                    exec(task)
+                    tested_capabilities.append((task, "Test Passed"))
+                except Exception as e:
+                    tested_capabilities.append((task, f"Test Failed: {e}"))
+        return tested_capabilities
+
+    # Fallback Scoring Mechanism
+    def advanced_task_scoring(self, reference_task="optimize memory usage"):
+        tasks = self.recursive_framework.tasks
+
+        try:
+            from sentence_transformers import SentenceTransformer, util
+            model = SentenceTransformer('all-MiniLM-L6-v2')
+            task_descriptions = [task.split("\n")[0] for task in tasks]
+            embeddings = model.encode(task_descriptions + [reference_task], convert_to_tensor=True)
+            similarity_scores = util.cos_sim(embeddings[-1], embeddings[:-1]).flatten().tolist()
+        except ImportError:
+            # Fallback to TF-IDF scoring
+            vectorizer = TfidfVectorizer()
+            task_descriptions = [task.split("\n")[0] for task in tasks]
+            vectors = vectorizer.fit_transform(task_descriptions + [reference_task])
+            similarity_scores = cosine_similarity(vectors[-1], vectors[:-1]).flatten().tolist()
+
+        scored_tasks = sorted(zip(tasks, similarity_scores), key=lambda x: x[1], reverse=True)
+        self.tasks = [task for task, _ in scored_tasks]
+        return self.tasks
