@@ -102,14 +102,22 @@ class RecursiveSelfImprovementFramework:
         """
         self.ontology_graph.visualize_graph()
 
-    def iterative_refinement(self, max_iterations=3):
+    def enhanced_iterative_refinement(self, max_iterations=3):
         """
-        Iteratively refines abstract placeholders into actionable steps.
+        Iteratively refines abstract placeholders into actionable steps using heuristics.
         """
         refined_iterations = []
         for task in self.tasks:
             for _ in range(max_iterations):
                 if "placeholder" in task.lower():
-                    task = task.replace("placeholder", "refined")
+                    if "parse" in task.lower():
+                        task = "# Code to parse data logs\ndef parse_data_logs(): print('Parsing data logs...')"
+                    elif "validate" in task.lower():
+                        task = "# Code to validate configurations\ndef validate_config(): print('Validating configurations...')"
+                    elif "suggest" in task.lower():
+                        task = "# Code to suggest improvements\ndef suggest_improvements(): print('Suggesting improvements...')"
+                    else:
+                        task = task.replace("placeholder", "refined")
                 refined_iterations.append(task)
+        self.tasks = refined_iterations
         return refined_iterations
