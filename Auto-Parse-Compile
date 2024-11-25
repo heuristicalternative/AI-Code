@@ -67,7 +67,7 @@ class OntologyKnowledgeGraph:
 class RecursiveSelfImprovementFramework:
     def __init__(self):
         self.parser = ScalableParser()
-        self.enhancer = DualPlaceholder Enhancer()
+        self.enhancer = DualPlaceholderEnhancer()
         self.refiner = ResilientRecursiveLogic()
         self.integrator = ModularIntegrator()
         self.backup_manager = NodeBackupManager()
