@@ -1,6 +1,8 @@
 from datetime import datetime
 import networkx as nx
 import matplotlib.pyplot as plt
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
 
 # Dual Placeholder Enhancer
 class DualPlaceholderEnhancer:
@@ -125,24 +127,29 @@ class RecursiveSelfImprovementFramework:
         self.tasks = refined_tasks
         return refined_tasks
 
-    def optimize_ontology_relationship_mapping(self):
-        """
-        Introduces multi-level relationships like 'supports' or 'enhances' for richer ontology depth.
-        """
-        task_ids = [f"Task_{i}" for i, _ in enumerate(self.tasks, start=1)]
-        for i in range(len(task_ids) - 1):
-            self.ontology_graph.add_relationship(task_ids[i], task_ids[i + 1], "supports")
-        for i in range(0, len(task_ids) - 2, 2):
-            self.ontology_graph.add_relationship(task_ids[i], task_ids[i + 2], "enhances")
-
     def integrate_advanced_nlp_models(self):
         """
-        Placeholder: Uses pre-trained NLP models for nuanced subtask extraction.
+        Uses a transformer-based model to derive subtasks dynamically from placeholders.
         """
+        tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+        model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=3)
+
         refined_tasks = []
         for task in self.tasks:
             if "placeholder" in task.lower():
-                refined_tasks.append("# Subtask (NLP-derived): Advanced semantic refinement for task - {}".format(task))
+                inputs = tokenizer(task, return_tensors="pt", truncation=True, padding=True)
+                outputs = model(**inputs)
+                scores = torch.nn.functional.softmax(outputs.logits, dim=1)
+                predicted_label = torch.argmax(scores).item()
+
+                if predicted_label == 0:
+                    refined_tasks.append("# Subtask: Parsing-related refinement")
+                elif predicted_label == 1:
+                    refined_tasks.append("# Subtask: Validation-related refinement")
+                elif predicted_label == 2:
+                    refined_tasks.append("# Subtask: Optimization-related refinement")
+                else:
+                    refined_tasks.append("# Subtask: General refinement")
             else:
                 refined_tasks.append(task)
         self.tasks = refined_tasks
