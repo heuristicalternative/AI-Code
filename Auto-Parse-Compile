@@ -2,51 +2,19 @@ from datetime import datetime
 import networkx as nx
 import matplotlib.pyplot as plt
 
-
-# 1. Dual Placeholder Enhancer
+# Dual Placeholder Enhancer
 class DualPlaceholderEnhancer:
-    def __init__(self):
-        self.use_transformers = self.check_transformer_availability()
-        if self.use_transformers:
-            self.tokenizer, self.model = self.load_transformer_model()
-
-    def check_transformer_availability(self):
-        try:
-            from transformers import AutoTokenizer, AutoModelForCausalLM
-            return True
-        except ImportError:
-            print("Transformers library not available, using heuristic fallback.")
-            return False
-
-    def load_transformer_model(self):
-        from transformers import AutoTokenizer, AutoModelForCausalLM
-        tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neo-2.7B")
-        model = AutoModelForCausalLM.from_pretrained("EleutherAI/gpt-neo-2.7B")
-        return tokenizer, model
-
     def enhance_task(self, task_description):
-        if self.use_transformers:
-            return self.generate_with_transformer(task_description)
-        else:
-            return self.generate_with_heuristics(task_description)
-
-    def generate_with_transformer(self, task_description):
-        prompt = f"Generate Python code for the following task description:\n{task_description}\nCode:"
-        inputs = self.tokenizer(prompt, return_tensors="pt")
-        outputs = self.model.generate(inputs["input_ids"], max_length=150, num_return_sequences=1, temperature=0.7)
-        generated_code = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return generated_code.split("Code:")[-1].strip()
-
-    def generate_with_heuristics(self, task_description):
         if "parse" in task_description.lower():
             return f"# Code to parse data\ndef parse_data(): print('Parsing data...')"
         elif "validate" in task_description.lower():
             return f"# Code to validate configurations\ndef validate_config(): print('Validating configurations...')"
+        elif "suggest" in task_description.lower():
+            return f"# Code to suggest improvements\ndef suggest_improvements(): print('Suggesting improvements...')"
         else:
             return f"# Placeholder for task: {task_description}\ndef task_function(): pass"
 
-
-# 2. Resilient Recursive Logic
+# Resilient Recursive Logic
 class ResilientRecursiveLogic:
     def suggest_recursion(self, logic_graph):
         suggestions = []
@@ -55,23 +23,20 @@ class ResilientRecursiveLogic:
                 suggestions.append(f"Consider refining or expanding {task_id}")
         return suggestions
 
-
-# 3. Scalable Parser
+# Scalable Parser
 class ScalableParser:
     def parse_large_text(self, text, max_tokens=500):
         tokens = text.split()
         chunks = [" ".join(tokens[i:i + max_tokens]) for i in range(0, len(tokens), max_tokens)]
         return chunks
 
-
-# 4. Modular Integrator
+# Modular Integrator
 class ModularIntegrator:
     def integrate_modules(self, modules):
         unique_modules = list(dict.fromkeys(modules))  # Remove duplicates
-        return f"# Integrated System\n{'\n'.join(unique_modules)}"
+        return f"# Optimized Integrated System\n{'\n'.join(unique_modules)}"
 
-
-# 5. Failsafes and Node Backups
+# Failsafes and Node Backups
 class NodeBackupManager:
     def __init__(self):
         self.backups = {}
@@ -82,24 +47,15 @@ class NodeBackupManager:
     def restore_node(self, node_id):
         return self.backups.get(node_id, "Backup not available.")
 
-
-# 6. Perspective Advisor
-class PerspectiveAdvisor:
-    def suggest_larger_perspective(self, tasks):
-        if len(tasks) > 5:  # Threshold for large systems
-            return "Would you like to develop a larger perspective by integrating these systems?"
-        return "Proceeding with modular integration."
-
-
-# 7. Ontology Graph for Task Relationships
+# Ontology Knowledge Graph
 class OntologyKnowledgeGraph:
     def __init__(self):
         self.graph = nx.DiGraph()
 
-    def add_task(self, task_id, description):
-        self.graph.add_node(task_id, description=description)
+    def add_task(self, task_id, description, capabilities=["general_capability"]):
+        self.graph.add_node(task_id, description=description, capabilities=capabilities)
 
-    def add_relationship(self, task_id_1, task_id_2, relationship):
+    def add_relationship(self, task_id_1, task_id_2, relationship="depends_on"):
         self.graph.add_edge(task_id_1, task_id_2, relationship=relationship)
 
     def visualize_graph(self):
@@ -107,8 +63,7 @@ class OntologyKnowledgeGraph:
         nx.draw(self.graph, pos, with_labels=True, node_size=2000, font_size=10)
         plt.show()
 
-
-# 8. Recursive Self-Improvement Framework
+# Recursive Self-Improvement Framework
 class RecursiveSelfImprovementFramework:
     def __init__(self):
         self.parser = ScalableParser()
@@ -120,6 +75,9 @@ class RecursiveSelfImprovementFramework:
         self.tasks = []
 
     def process_conversation(self, conversation_text):
+        """
+        Processes the conversation text to parse intents and refine tasks.
+        """
         chunks = self.parser.parse_large_text(conversation_text)
         refined_tasks = []
 
@@ -133,19 +91,22 @@ class RecursiveSelfImprovementFramework:
         return refined_tasks
 
     def integrate_tasks(self):
+        """
+        Integrates all refined tasks into a single output system.
+        """
         return self.integrator.integrate_modules(self.tasks)
 
     def visualize_ontology(self):
+        """
+        Visualizes the ontology graph to understand task relationships.
+        """
         self.ontology_graph.visualize_graph()
-
 
 # Example Execution
 if __name__ == "__main__":
     conversation_text = """
-    Build a system to:
-    1. Parse large datasets efficiently.
-    2. Validate configurations automatically.
-    3. Suggest improvements for workflows.
+    To develop a resilient, efficient, and resource-conscious framework capable of parsing, integrating, and scaling modular systems step-by-step.
+    The framework should focus on delivering critical results, avoiding resource depletion, and incorporating failsafes for robustness and adaptability.
     """
     framework = RecursiveSelfImprovementFramework()
     refined_tasks = framework.process_conversation(conversation_text)
