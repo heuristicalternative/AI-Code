@@ -1,86 +1,26 @@
-# Update to extend the maximum age for context retrieval and integrate real-time feedback loops
+from datetime import datetime, timedelta
+import tracemalloc
+import time
 
-# Updating RAG System for extended retrieval and feedback integration
+# Define RAGSystem class with necessary corrections
 class RAGSystem:
     def __init__(self, vector_store_path="vector_store"):
-        self.vector_store = FAISS.load_local(vector_store_path, OpenAIEmbeddings())
+        self.memory = []  # Placeholder for a memory store
 
     def add_to_memory(self, text, metadata=None):
-        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        chunks = splitter.split_text(text)
-        for chunk in chunks:
-            self.vector_store.add_document(chunk, metadata or {"timestamp": datetime.now()})
+        self.memory.append({"text": text, "metadata": metadata or {"timestamp": datetime.now()}})
 
     def retrieve_relevant(self, query, max_age_days=720):
         cutoff_date = datetime.now() - timedelta(days=max_age_days)
-        results = self.vector_store.search(query)
-        return [res for res in results if res.metadata.get("timestamp", datetime.min) > cutoff_date]
+        return [
+            item["text"] for item in self.memory
+            if query.lower() in item["text"].lower() and item["metadata"]["timestamp"] > cutoff_date
+        ]
 
     def apply_feedback(self, feedback):
-        """
-        Adds user feedback into memory for refinement purposes.
-        """
         for item in feedback:
-            self.add_to_memory(str(item), {"source": "feedback"})
-
-# Update Recursive Framework for real-time feedback and iterative refinement
-class RecursiveSelfImprovementFramework:
-    def __init__(self):
-        self.parser = ScalableParser()
-        self.enhancer = DualPlaceholderEnhancer()
-        self.integrator = ModularIntegrator()
-        self.ontology_graph = OntologyKnowledgeGraph()
-        self.rag_system = RAGSystem()
-        self.tasks = []
-
-    def process_conversation(self, conversation_text):
-        chunks = self.parser.parse_large_text(conversation_text)
-        for chunk in chunks:
-            enhanced_task = self.enhancer.enhance_task(chunk)
-            self.ontology_graph.add_task(chunk, enhanced_task)
-            self.tasks.append(enhanced_task)
-        return self.tasks
-
-    def integrate_tasks(self):
-        return self.integrator.integrate_modules(self.tasks)
-
-    def recursive_check_for_missing_capabilities(self, expected_capabilities):
-        missing_capabilities = []
-        for capability in expected_capabilities:
-            if not any(capability in task.lower() for task in self.tasks):
-                missing_capabilities.append(capability)
-        if missing_capabilities:
-            for capability in missing_capabilities:
-                self.tasks.append(f"# Rebuilt Capability: {capability}")
-        return missing_capabilities
-
-    def parallel_thread_development(self, conversation_thread):
-        processed_tasks = self.process_conversation(conversation_thread)
-        training_thread = self.rag_system.retrieve_relevant("framework")
-        for ctx in training_thread:
-            self.process_conversation(ctx)
-        return processed_tasks, training_thread
-
-    def monitor_scalability(self, task_description):
-        tracemalloc.start()
-        start_time = time.time()
-        self.process_conversation(task_description)
-        self.integrate_tasks()
-        end_time = time.time()
-        current, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-        return {"execution_time": end_time - start_time, "memory_usage": current / 10**6, "peak_memory": peak / 10**6}
-
-    def real_time_feedback_loop(self, feedback_data):
-        """
-        Incorporates user feedback dynamically into the framework.
-        """
-        self.rag_system.apply_feedback(feedback_data)
-        for feedback in feedback_data:
-            for i, task in enumerate(self.tasks):
-                if feedback['task'] in task and feedback['action'] == 'refine':
-                    self.tasks[i] = f"# Real-time Refined Task: {feedback['refinement']}"
-        return self.tasks
+            feedback_text = f"Feedback for task '{item['task']}': {item['refinement']}"
+            self.add_to_memory(feedback_text, {"source": "feedback"})
 
 # Supporting Modules
 class ScalableParser:
@@ -101,42 +41,48 @@ class DualPlaceholderEnhancer:
 
 class ModularIntegrator:
     def integrate_modules(self, modules):
-        return f"# Optimized Integrated System\n{'\n'.join(modules)}"
+        return "# Optimized Integrated System\n" + "\n".join(modules)
 
-class OntologyKnowledgeGraph:
+# Main Framework
+class RecursiveSelfImprovementFramework:
     def __init__(self):
-        self.graph = nx.DiGraph()
+        self.parser = ScalableParser()
+        self.enhancer = DualPlaceholderEnhancer()
+        self.integrator = ModularIntegrator()
+        self.rag_system = RAGSystem()
+        self.tasks = []
 
-    def add_task(self, task_id, description, capabilities=["general_capability"]):
-        self.graph.add_node(task_id, description=description, capabilities=capabilities)
+    def process_conversation(self, conversation_text):
+        chunks = self.parser.parse_large_text(conversation_text)
+        for chunk in chunks:
+            enhanced_task = self.enhancer.enhance_task(chunk)
+            self.tasks.append(enhanced_task)
+        return self.tasks
 
-    def visualize_graph(self):
-        nx.draw(self.graph, with_labels=True, node_size=2000, font_size=10)
-        plt.show()
+    def integrate_tasks(self):
+        return self.integrator.integrate_modules(self.tasks)
 
-# Define test conversation thread
-conversation_thread = """
-Develop a system that dynamically parses, validates, integrates tasks, and retrieves relevant context up to 720 days.
-Enable parallel processing of user feedback while maintaining iterative improvement capabilities.
-"""
+    def parallel_thread_development(self, conversation_thread):
+        processed_tasks = self.process_conversation(conversation_thread)
+        training_thread = self.rag_system.retrieve_relevant("framework")
+        for ctx in training_thread:
+            self.process_conversation(ctx)
+        return processed_tasks, training_thread
 
-# Instantiate the framework
-framework = RecursiveSelfImprovementFramework()
+    def real_time_feedback_loop(self, feedback_data):
+        self.rag_system.apply_feedback(feedback_data)
+        for feedback in feedback_data:
+            for i, task in enumerate(self.tasks):
+                if feedback['task'] in task and feedback['action'] == 'refine':
+                    self.tasks[i] = f"# Real-time Refined Task: {feedback['refinement']}"
+        return self.tasks
 
-# Step 1: Test parallel processing and iterative refinement
-processed_tasks, training_thread = framework.parallel_thread_development(conversation_thread)
-
-# Step 2: Apply real-time feedback
-mock_feedback = [
-    {"task": "parse", "action": "refine", "refinement": "Enhanced schema parsing for varied datasets"},
-    {"task": "integrate", "action": "refine", "refinement": "Optimized modular integration for scalability"},
-]
-tasks_after_feedback = framework.real_time_feedback_loop(mock_feedback)
-
-# Final Outputs
-{
-    "processed_tasks": processed_tasks,
-    "training_thread": training_thread,
-    "tasks_after_feedback": tasks_after_feedback,
-    "scalability_metrics": framework.monitor_scalability(conversation_thread),
-}
+    def monitor_scalability(self, task_description):
+        tracemalloc.start()
+        start_time = time.time()
+        self.process_conversation(task_description)
+        self.integrate_tasks()
+        end_time = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        return {"execution_time": end_time - start_time, "memory_usage": current / 10**6, "peak_memory": peak / 10**6}
