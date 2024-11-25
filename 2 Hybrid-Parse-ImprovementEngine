@@ -4,6 +4,8 @@ import logging
 from datetime import datetime, timedelta
 import networkx as nx
 import matplotlib.pyplot as plt
+import streamlit as st
+import spacy
 
 # Supporting RAGSystem
 class RAGSystem:
@@ -46,35 +48,71 @@ class ModularIntegrator:
         return "# Optimized Integrated System\n" + "\n".join(modules)
 
 
-class EnhancedHybridFrameworkWithDependencyVisualization:
+class NLPContextParser:
+    """Parses conversation threads for semantic intent and hierarchical relationships."""
     def __init__(self):
-        self.recursive_framework = RecursiveSelfImprovementFramework()
-        self.meta_framework = MetaProgrammingModule(self.recursive_framework)
+        self.nlp = spacy.load("en_core_web_sm")
+
+    def parse_conversation(self, conversation_text):
+        doc = self.nlp(conversation_text)
+        tasks = []
+        for sent in doc.sents:
+            task = {
+                "text": sent.text,
+                "verbs": [token.lemma_ for token in sent if token.pos_ == "VERB"],
+                "entities": [(ent.text, ent.label_) for ent in sent.ents]
+            }
+            tasks.append(task)
+        return tasks
+
+
+class DynamicDebugger:
+    """Analyzes test case failures and refines associated tasks and dependencies."""
+    def debug_test_cases(self, test_cases, framework):
+        debug_results = []
+        for test_case in test_cases:
+            try:
+                exec(test_case)  # Dynamically execute the test case
+                debug_results.append({"test_case": test_case, "status": "Passed"})
+            except Exception as e:
+                debug_results.append({"test_case": test_case, "status": f"Failed: {str(e)}"})
+                # Refinement logic
+                function_name = test_case.split("test_")[1].split("(")[0]
+                refinement = f"# Refined code for {function_name}\ndef {function_name}(): print('Refining {function_name}...')"
+                framework.tasks.append(refinement)
+        return debug_results
+
+
+class EnhancedHybridFrameworkWithDebugging:
+    def __init__(self):
         self.rag_system = RAGSystem()
         self.enhancer = DualPlaceholderEnhancer()
         self.integrator = ModularIntegrator()
+        self.nlp_parser = NLPContextParser()
+        self.debugger = DynamicDebugger()
         self.tasks = []
 
-    # Batch Processing
     def process_with_batching(self, conversation_text, batch_size=100):
         tokens = conversation_text.split()
         batches = [" ".join(tokens[i:i + batch_size]) for i in range(0, len(tokens), batch_size)]
         batch_results = []
 
         for batch in batches:
-            enhanced_tasks = self.recursive_framework.process_conversation(batch)
-            for task in enhanced_tasks:
-                self.tasks.append(self.enhancer.enhance_task(task))
-            batch_results.extend(enhanced_tasks)
+            parsed_tasks = self.nlp_parser.parse_conversation(batch)
+            for task in parsed_tasks:
+                enhanced_task = self.enhancer.enhance_task(task["text"])
+                self.tasks.append(enhanced_task)
+                batch_results.append(enhanced_task)
 
         return batch_results
 
-    # Resource Monitoring
     def monitor_resources(self, task_description):
         tracemalloc.start()
         start_time = time.time()
-        processed_tasks = self.recursive_framework.process_conversation(task_description)
-        integrated_code = self.recursive_framework.integrate_tasks()
+        parsed_tasks = self.nlp_parser.parse_conversation(task_description)
+        for task in parsed_tasks:
+            self.tasks.append(self.enhancer.enhance_task(task["text"]))
+        integrated_code = self.integrator.integrate_modules(self.tasks)
         end_time = time.time()
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
@@ -84,13 +122,8 @@ class EnhancedHybridFrameworkWithDependencyVisualization:
             "current_memory_usage_MB": current / 10**6,
             "peak_memory_usage_MB": peak / 10**6
         }
+        return metrics, self.tasks, integrated_code
 
-        logging.info(f"Task Description: {task_description}")
-        logging.info(f"Metrics: {metrics}")
-
-        return metrics, processed_tasks, integrated_code
-
-    # Capability Recovery and Modular Integration
     def detect_and_recover_capabilities(self, expected_capabilities):
         missing_capabilities = [
             capability for capability in expected_capabilities
@@ -106,49 +139,35 @@ class EnhancedHybridFrameworkWithDependencyVisualization:
     def integrate_tasks(self):
         return self.integrator.integrate_modules(self.tasks)
 
-    # Feedback and Memory
-    def apply_feedback_with_memory(self, feedback_data):
-        self.rag_system.apply_feedback(feedback_data)
-        return self.rag_system.memory
-
-    # Dependency Management
     def map_dependencies(self):
-        """Maps and visualizes task dependencies."""
         dependency_graph = {}
         for task in self.tasks:
-            task_name = task.split("\n")[0].replace("# Task:", "").strip()
+            task_name = task.split("\n")[0].replace("# Placeholder for task:", "").strip()
             dependencies = [dep for dep in self.tasks if dep in task]
             dependency_graph[task_name] = dependencies
         return dependency_graph
 
     def visualize_dependencies(self):
-        """Visualize the dependency graph of tasks using NetworkX."""
         dependency_graph = self.map_dependencies()
         G = nx.DiGraph()
-
-        # Add nodes and edges to the graph
         for task, dependencies in dependency_graph.items():
             G.add_node(task)
             for dependency in dependencies:
                 G.add_edge(dependency, task)
-
-        # Plot the graph
         plt.figure(figsize=(12, 8))
         nx.draw(
             G,
             with_labels=True,
-            node_color='lightblue',
-            font_weight='bold',
+            node_color="lightblue",
+            font_weight="bold",
             font_size=10,
-            edge_color='gray',
+            edge_color="gray",
             node_size=2000
         )
         plt.title("Task Dependency Graph")
         plt.show()
 
-    # Dynamic Testing
     def generate_test_cases(self):
-        """Generates test cases for tasks and modules."""
         test_cases = []
         for task in self.tasks:
             if "def" in task:
@@ -157,7 +176,9 @@ class EnhancedHybridFrameworkWithDependencyVisualization:
                 test_cases.append(test_case)
         return test_cases
 
-import streamlit as st
+    def debug_and_refine(self, test_cases):
+        return self.debugger.debug_test_cases(test_cases, self)
+
 
 class RealTimeMonitoringDashboard:
     def __init__(self, framework):
@@ -167,45 +188,24 @@ class RealTimeMonitoringDashboard:
         st.title("Real-Time Monitoring Dashboard")
         st.write("### Task Processing and Resource Monitoring")
         
-        # Display Resource Metrics
-        st.write("#### Resource Metrics")
-        resource_metrics = st.container()
-        
-        # Display Processed Tasks
-        st.write("#### Processed Tasks")
-        tasks_container = st.container()
-
-        # Display Dependency Graph
-        st.write("#### Task Dependency Graph")
-        graph_container = st.container()
-
-        # Start Monitoring
         if st.button("Start Task Monitoring"):
-            # Example conversation for task processing
             conversation_text = """
             Develop advanced parsing logic to extract subtasks dynamically from deeply nested workflows.
             Test semantic scoring capabilities with sentence_transformers for task prioritization.
             Enable dynamic feedback loops for real-time task refinement.
             Ensure scalability with large and complex conversation threads.
             """
-            
-            # Process tasks in batches
             batch_results = self.framework.process_with_batching(conversation_text, batch_size=50)
-            st.write(f"Processed {len(batch_results)} tasks successfully.")
-            
-            # Monitor resources
-            metrics, processed_tasks, integrated_code = self.framework.monitor_resources(conversation_text)
-            resource_metrics.write(metrics)
-            
-            # Display tasks
-            tasks_container.write(processed_tasks)
-            
-            # Visualize dependency graph
-            st.write("Visualizing Dependency Graph...")
+            st.write(f"Processed {len(batch_results)} tasks.")
+            metrics, tasks, integrated_code = self.framework.monitor_resources(conversation_text)
+            st.write("Resource Metrics:", metrics)
+            st.write("Tasks Processed:", tasks)
+            st.write("Integrated Code:", integrated_code)
+            st.write("Visualizing Task Dependencies...")
             self.framework.visualize_dependencies()
 
-# Initialize and run the dashboard
+
 if __name__ == "__main__":
-    enhanced_framework_with_dashboard = EnhancedHybridFrameworkWithDependencyVisualization()
-    dashboard = RealTimeMonitoringDashboard(enhanced_framework_with_dashboard)
+    enhanced_framework = EnhancedHybridFrameworkWithDebugging()
+    dashboard = RealTimeMonitoringDashboard(enhanced_framework)
     dashboard.display_dashboard()
