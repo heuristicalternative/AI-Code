@@ -117,10 +117,16 @@ class RecursiveSelfImprovementFramework:
         self.tasks = []
 
     def process_conversation(self, conversation_text):
+        """
+        Improved method to parse conversation text and avoid empty or malformed task descriptions.
+        """
         chunks = conversation_text.split('.')
+        self.tasks = []  # Reset tasks to ensure no duplication
         for chunk in chunks:
-            task = f"# Task: {chunk.strip()}\ndef task_function(): pass"
-            self.tasks.append(task)
+            task_description = chunk.strip()
+            if task_description:  # Avoid empty task descriptions
+                task = f"# Task: {task_description}\ndef task_function(): pass"
+                self.tasks.append(task)
         return self.tasks
 
     def integrate_tasks(self):
@@ -153,11 +159,14 @@ class RecursiveSelfImprovementFramework:
 
     def runtime_feedback_integration(self, execution_results):
         """
-        Integrates runtime feedback to refine task definitions.
+        Enhanced runtime feedback integration for refining tasks with actionable suggestions.
         """
         for result in execution_results.get("results", []):
             if "error" in result:
-                refinement = f"# Refinement based on runtime error: {result['error']}"
+                refinement = f"# Refinement based on runtime error: {result['error']}\ndef refinement_task(): pass"
+                self.tasks.append(refinement)
+            elif "executing" in result["result"]:
+                refinement = f"# Refinement to enhance task execution: {result['result']}\ndef refine_execution(): pass"
                 self.tasks.append(refinement)
         return self.tasks
 
@@ -215,19 +224,27 @@ class HybridFramework:
 
         return results
 
-# Running the Hybrid Framework
+# Testing the Hybrid Framework with Cross-Thread Validation
 conversation_text = """
-Develop dynamic parsing and integration capabilities for large-scale AI systems.
-Optimize memory usage and token management for scalability.
-Implement real-time feedback for iterative refinement of tasks.
+Validate cross-thread communication and task synchronization.
+Enable semantic scoring and prioritize tasks effectively.
+Test the framework with larger, nested conversation threads.
 """
 
+# Initialize the Hybrid Framework
 hybrid_framework = HybridFramework()
-result = hybrid_framework.process_and_improve(conversation_text, iterations=3)
-parallel_results = hybrid_framework.parallel_task_execution(conversation_text, iterations=2)
 
-enhanced_results = {
+# Process and validate cross-thread enhancements
+result = hybrid_framework.process_and_improve(conversation_text, iterations=3)
+
+# Execute tasks in parallel for scalability testing
+parallel_results = hybrid_framework.parallel_task_execution(conversation_text, iterations=3)
+
+# Collect the results
+validation_results = {
     "integrated_code": result[0],
     "tasks": result[1],
     "parallel_execution_results": parallel_results
 }
+
+validation_results
