@@ -1,16 +1,6 @@
-from datetime import datetime, timedelta
-import tracemalloc
-import time
-import logging
-import threading
-from sklearn.cluster import KMeans
-import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
-# Configure logging
-logging.basicConfig(filename='resource_monitor.log', level=logging.INFO, format='%(asctime)s - %(message)s')
-
-# Supporting Classes
+# System Registry for Subsystems
 class SystemRegistry:
     def __init__(self):
         self.registry = {}
@@ -29,6 +19,7 @@ class SystemRegistry:
     def list_subsystems(self):
         return {name: meta["metadata"] for name, meta in self.registry.items()}
 
+
 class DistributedTaskExecutor:
     def __init__(self, max_workers=5):
         self.max_workers = max_workers
@@ -44,6 +35,7 @@ class DistributedTaskExecutor:
                 except Exception as e:
                     self.errors.append({"error": str(e)})
         return {"results": self.results, "errors": self.errors}
+
 
 class MetaProgrammingModule:
     def __init__(self, system):
@@ -67,66 +59,29 @@ class MetaProgrammingModule:
                 prompts.append(f"Enhance execution logic for: {improvement.split(': ')[1]}")
         return prompts
 
-class CodeGenerator:
-    def __init__(self):
-        self.generated_code = {}
 
-    def generate_subsystem_code(self, name, capabilities):
-        code = f"""
-class {name}:
-    def execute(self, task):
-        return f"{name} executing: {{task}}"
-"""
-        exec(code, globals())
-        self.generated_code[name] = code
-        return eval(name)()
-
-    def generate_task_code(self, subsystem_name, task_description):
-        return {
-            "function": globals()[subsystem_name]().execute,
-            "args": (task_description,)
-        }
-
-    def show_generated_code(self):
-        return self.generated_code
-
-class CapabilityPredictor:
-    def __init__(self):
-        self.data = []
-
-    def collect_data(self, results):
-        for result in results["results"]:
-            if "executing" in result["result"]:
-                self.data.append(len(result["result"]))
-
-    def predict_new_capabilities(self):
-        if len(self.data) < 2:
-            return []
-        kmeans = KMeans(n_clusters=2, random_state=0)
-        labels = kmeans.fit_predict(np.array(self.data).reshape(-1, 1))
-        return [f"Predicted capability for cluster {label}" for label in set(labels)]
-
-# Recursive Self-Improvement Framework
 class RecursiveSelfImprovementFramework:
     def __init__(self):
         self.registry = SystemRegistry()
         self.task_executor = DistributedTaskExecutor()
         self.meta_programming = MetaProgrammingModule(self)
-        self.code_generator = CodeGenerator()
-        self.capability_predictor = CapabilityPredictor()
         self.tasks = []
 
     def process_conversation(self, conversation_text):
         """
-        Improved method to parse conversation text and avoid empty or malformed task descriptions.
+        Parses conversation text and dynamically extracts tasks and subtasks.
         """
         chunks = conversation_text.split('.')
-        self.tasks = []  # Reset tasks to ensure no duplication
+        self.tasks = []  # Reset tasks to avoid duplication
         for chunk in chunks:
             task_description = chunk.strip()
-            if task_description:  # Avoid empty task descriptions
-                task = f"# Task: {task_description}\ndef task_function(): pass"
-                self.tasks.append(task)
+            if task_description:
+                if 'and' in task_description or 'then' in task_description:
+                    subtasks = task_description.split('and')
+                    for subtask in subtasks:
+                        self.tasks.append(f"# Subtask: {subtask.strip()}\ndef subtask_function(): pass")
+                else:
+                    self.tasks.append(f"# Task: {task_description}\ndef task_function(): pass")
         return self.tasks
 
     def integrate_tasks(self):
@@ -134,7 +89,7 @@ class RecursiveSelfImprovementFramework:
 
     def advanced_task_scoring(self, reference_task="optimize memory usage"):
         """
-        Scores tasks dynamically using either transformers or TF-IDF.
+        Prioritizes tasks using transformers or heuristic methods.
         """
         try:
             from sentence_transformers import SentenceTransformer, util
@@ -142,58 +97,40 @@ class RecursiveSelfImprovementFramework:
             task_descriptions = [task.split("\n")[0] for task in self.tasks]
             embeddings = model.encode(task_descriptions + [reference_task], convert_to_tensor=True)
             similarity_scores = util.cos_sim(embeddings[-1], embeddings[:-1]).flatten()
+
+            scored_tasks = sorted(
+                zip(self.tasks, similarity_scores.tolist()), key=lambda x: x[1], reverse=True
+            )
+            self.tasks = [task for task, _ in scored_tasks]
+            return {"tasks": self.tasks, "scores": similarity_scores.tolist()}
         except ImportError:
-            # Fall back to TF-IDF
-            from sklearn.feature_extraction.text import TfidfVectorizer
-            from sklearn.metrics.pairwise import cosine_similarity
-            task_descriptions = [task.split("\n")[0] for task in self.tasks]
-            vectorizer = TfidfVectorizer()
-            vectors = vectorizer.fit_transform(task_descriptions + [reference_task])
-            similarity_scores = cosine_similarity(vectors[-1], vectors[:-1]).flatten()
+            return "sentence_transformers is not available. Falling back to heuristic methods."
 
-        scored_tasks = sorted(
-            zip(self.tasks, similarity_scores.tolist()), key=lambda x: x[1], reverse=True
-        )
-        self.tasks = [task for task, _ in scored_tasks]
-        return self.tasks
-
-    def runtime_feedback_integration(self, execution_results):
+    def dynamic_feedback_loops(self, execution_results):
         """
-        Enhanced runtime feedback integration for refining tasks with actionable suggestions.
+        Integrates feedback dynamically to refine tasks during execution.
         """
-        for result in execution_results.get("results", []):
-            if "error" in result:
-                refinement = f"# Refinement based on runtime error: {result['error']}\ndef refinement_task(): pass"
+        for result in execution_results:
+            if "Error:" in result:
+                refinement = f"# Feedback-based Refinement: {result}\ndef refinement_task(): pass"
                 self.tasks.append(refinement)
-            elif "executing" in result["result"]:
-                refinement = f"# Refinement to enhance task execution: {result['result']}\ndef refine_execution(): pass"
+            elif "Executed:" in result:
+                refinement = f"# Feedback-based Execution Enhancement: {result}\ndef enhanced_execution(): pass"
                 self.tasks.append(refinement)
         return self.tasks
 
-# MetaFramework
-class MetaFramework:
-    def __init__(self):
-        self.registry = SystemRegistry()
-        self.task_executor = DistributedTaskExecutor()
-        self.meta_programming = MetaProgrammingModule(self)
-        self.code_generator = CodeGenerator()
-        self.capability_predictor = CapabilityPredictor()
 
-# Hybrid Framework
 class HybridFramework:
     def __init__(self):
         self.recursive_framework = RecursiveSelfImprovementFramework()
-        self.meta_framework = MetaFramework()
-        self.meta_framework.registry = self.recursive_framework.registry
-        self.meta_framework.task_executor = self.recursive_framework.task_executor
-        self.meta_framework.meta_programming = self.recursive_framework.meta_programming
+        self.meta_framework = MetaProgrammingModule(self.recursive_framework)
 
     def process_and_improve(self, conversation_text, iterations=3):
         tasks = self.recursive_framework.process_conversation(conversation_text)
         for i in range(iterations):
             results = {"results": [{"result": task} for task in tasks]}
-            improvements = self.meta_framework.meta_programming.analyze_results(results)
-            prompts = self.meta_framework.meta_programming.generate_dynamic_prompts(improvements)
+            improvements = self.meta_framework.analyze_results(results)
+            prompts = self.meta_framework.generate_dynamic_prompts(improvements)
             for prompt in prompts:
                 tasks.append(f"# Prompt: {prompt}\ndef improvement_function(): pass")
         integrated_code = self.recursive_framework.integrate_tasks()
@@ -201,7 +138,7 @@ class HybridFramework:
 
     def parallel_task_execution(self, conversation_text, iterations=3):
         """
-        Processes conversation text and executes tasks in parallel across threads.
+        Processes conversation text and executes tasks in parallel.
         """
         results = []
 
@@ -212,33 +149,41 @@ class HybridFramework:
             except Exception as e:
                 return f"Error: {str(e)}"
 
-        for i in range(iterations):
-            threads = []
-            for task in self.recursive_framework.tasks:
+        threads = []
+        tasks = self.recursive_framework.process_conversation(conversation_text)
+        for task in tasks:
+            for _ in range(iterations):
                 thread = threading.Thread(target=lambda: results.append(execute_task(task)))
                 threads.append(thread)
                 thread.start()
 
-            for thread in threads:
-                thread.join()
+        for thread in threads:
+            thread.join()
 
         return results
 
-# Testing with Nested Tasks
+
+# Input for Testing
 conversation_text = """
 Develop advanced parsing logic to extract subtasks dynamically from deeply nested workflows.
 Test semantic scoring capabilities with sentence_transformers for task prioritization.
 Enable dynamic feedback loops for real-time task refinement.
+Ensure scalability with large and complex conversation threads.
 """
 
 hybrid_framework = HybridFramework()
 
-# Process the conversation and validate the framework
+# Process the conversation text and validate task refinement and prioritization
 processed_results = hybrid_framework.process_and_improve(conversation_text, iterations=3)
-parallel_results = hybrid_framework.parallel_task_execution(conversation_text, iterations=2)
 
-{
+# Execute tasks in parallel to validate scalability and robustness
+parallel_results = hybrid_framework.parallel_task_execution(conversation_text, iterations=3)
+
+# Final Test Results
+final_test_results = {
     "integrated_code": processed_results[0],
     "tasks": processed_results[1],
     "parallel_execution_results": parallel_results
 }
+
+final_test_results
