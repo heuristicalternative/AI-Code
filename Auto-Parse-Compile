@@ -2,6 +2,10 @@ from datetime import datetime, timedelta
 import tracemalloc
 import time
 import threading
+import logging
+
+# Configure logging for resource monitoring
+logging.basicConfig(filename='resource_monitor.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
 class RAGSystem:
     def __init__(self, vector_store_path="vector_store"):
@@ -101,7 +105,33 @@ class RecursiveSelfImprovementFramework:
 
         return missing_capabilities
 
-    def monitor_scalability(self, task_description):
+    def test_recovered_capabilities(self):
+        tested_capabilities = []
+        for task in self.tasks:
+            if "recovered capability" in task.lower():
+                try:
+                    exec(task)  # Test the recovered function
+                    tested_capabilities.append((task, "Test Passed"))
+                except Exception as e:
+                    tested_capabilities.append((task, f"Test Failed: {str(e)}"))
+        return tested_capabilities
+
+    def prioritize_tasks(self):
+        task_scores = []
+        for task in self.tasks:
+            score = 0
+            if "parse" in task.lower():
+                score += 5
+            if "validate" in task.lower():
+                score += 3
+            if "suggest" in task.lower():
+                score += 2
+            task_scores.append((task, score))
+
+        self.tasks = [task for task, _ in sorted(task_scores, key=lambda x: x[1], reverse=True)]
+        return self.tasks
+
+    def monitor_resources_with_logging(self, task_description):
         tracemalloc.start()
         start_time = time.time()
         self.process_conversation(task_description)
@@ -109,4 +139,14 @@ class RecursiveSelfImprovementFramework:
         end_time = time.time()
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-        return {"execution_time": end_time - start_time, "memory_usage": current / 10**6, "peak_memory": peak / 10**6}
+
+        metrics = {
+            "execution_time": end_time - start_time,
+            "current_memory_usage": current / 10**6,
+            "peak_memory_usage": peak / 10**6
+        }
+
+        logging.info(f"Task Description: {task_description}")
+        logging.info(f"Metrics: {metrics}")
+
+        return metrics
