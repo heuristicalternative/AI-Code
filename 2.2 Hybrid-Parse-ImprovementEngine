@@ -1,4 +1,3 @@
-# Placeholder imports and setup for framework
 import tracemalloc
 import time
 from datetime import datetime, timedelta
@@ -194,9 +193,17 @@ class FinalOptimizedAIFramework:
         return results
 
 
+# Example Input Text
+conversation_text = "This framework will process tasks iteratively and refine them using semantic clustering and feedback."
+
 # Execute the Final Optimized Framework
 final_optimized_framework = FinalOptimizedAIFramework()
-final_optimized_results = final_optimized_framework.process("This framework will process tasks iteratively and refine them using semantic clustering and feedback.", max_iterations=3)
+final_optimized_results = final_optimized_framework.process(conversation_text, max_iterations=3)
 
 # Display the final results with semantic grouping, refinement control, and resource optimization
-final_optimized_results
+for result in final_optimized_results:
+    print(f"\nIteration {result['Iteration']} Results:")
+    print("Enhanced Tasks:", result["Enhanced_Tasks"])
+    print("Integrated Code:", result["Integrated_Code"])
+    print("Metrics:", result["Metrics"])
+    print("Improvement Detected:", result["Improvement_Detected"])
