@@ -1,0 +1,14 @@
+# Initialize components
+workflow_manager = ResearchWorkflowManager()
+feedback_engine = FeedbackEngine()
+technique_integrator = TechniqueIntegrator()
+
+# Add initial techniques
+technique_integrator.add_technique("Iterative Refinement")
+technique_integrator.add_technique("Cross-Domain Synthesis")
+
+# Initialize self-enhancing loop
+research_loop = SelfEnhancingResearchLoop(workflow_manager, feedback_engine, technique_integrator)
+
+# Execute research process for a given topic
+research_loop.execute_cycle(topic="AI-Driven Prompt Optimization", cycles=3)
