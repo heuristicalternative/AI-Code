@@ -2,164 +2,105 @@ import networkx as nx
 import itertools
 import random
 from textblob import TextBlob
-import requests
 
 
-# --- Decentralized Hypergraph System ---
-class DecentralizedHypergraphSystem:
-    """Decentralized hypergraph representation for narrative elements and synergies."""
+# --- Multi-Layered Hypergraph System ---
+class MultiLayerHypergraph(DecentralizedHypergraphSystem):
+    """Multi-layered hypergraph for recursive narrative generation."""
     def __init__(self):
-        self.graph = nx.MultiDiGraph()
+        super().__init__()
+        self.sub_graphs = {}
 
-    def add_node(self, node_id: str, attributes: dict = None):
-        self.graph.add_node(node_id, **(attributes or {}))
+    def add_sub_graph(self, node_id: str, sub_graph: DecentralizedHypergraphSystem):
+        self.sub_graphs[node_id] = sub_graph
 
-    def add_edge(self, source: str, target: str, weight: float = 1.0, attributes: dict = None):
-        self.graph.add_edge(source, target, weight=weight, **(attributes or {}))
-
-    def update_edge_weight(self, source: str, target: str, delta: float):
-        if self.graph.has_edge(source, target):
-            self.graph[source][target][0]["weight"] += delta
-
-    def get_synergies(self):
-        return [{"source": u, "target": v, "weight": d['weight']} for u, v, d in self.graph.edges(data=True)]
-
-    def serialize(self):
-        """Serialize the hypergraph to JSON format."""
-        return nx.node_link_data(self.graph)
-
-    def deserialize(self, data):
-        """Deserialize hypergraph data from JSON format."""
-        self.graph = nx.node_link_graph(data)
+    def generate_recursive_narrative(self, start_node: str, depth: int):
+        """Generate a narrative recursively through sub-graphs."""
+        narrative = [start_node]
+        current = start_node
+        for _ in range(depth):
+            if current in self.sub_graphs:
+                sub_graph = self.sub_graphs[current]
+                next_node = random.choice(list(sub_graph.graph.nodes))
+                narrative.append(next_node)
+                current = next_node
+            else:
+                break
+        return " -> ".join(narrative)
 
 
-# --- Adaptive Ontology System ---
-class AdaptiveOntology:
-    """Ontology system that evolves based on hypergraph updates and narrative feedback."""
-    def __init__(self):
-        self.ontology = {}
-
-    def add_concept(self, concept: str, relationships: list):
-        if concept not in self.ontology:
-            self.ontology[concept] = []
-        self.ontology[concept].extend(relationships)
-
-    def update_relationships(self, concept: str, new_relationships: list):
-        if concept in self.ontology:
-            self.ontology[concept].extend(new_relationships)
-
-    def get_ontology(self):
-        return self.ontology
-
-
-# --- Feedback Processor ---
-class FeedbackProcessor:
-    """Process user feedback and refine narrative structure."""
-    def __init__(self):
-        self.feedback_log = []
-
-    def process_feedback(self, feedback):
-        sentiment = TextBlob(feedback).sentiment.polarity
-        sentiment_type = "Positive" if sentiment > 0 else "Negative"
-        self.feedback_log.append({"feedback": feedback, "sentiment": sentiment_type})
-        return sentiment_type
-
-    def summarize_feedback(self):
-        positive = len([f for f in self.feedback_log if f["sentiment"] == "Positive"])
-        negative = len(self.feedback_log) - positive
-        return {"Positive Feedback": positive, "Negative Feedback": negative}
-
-
-# --- Narrative Generation ---
-def generate_narrative(ontology, start_node):
-    """Generate narrative paths dynamically from ontology structure."""
+# --- Personalized Narrative Generator ---
+def generate_personalized_narrative(ontology, start_node, user_profile):
+    """Generate narratives adapted to a user's cultural and psychological context."""
     story_path = [start_node]
     current = start_node
     while current in ontology.ontology:
         next_nodes = ontology.ontology[current]
-        current = random.choice(next_nodes) if next_nodes else None
+        filtered_nodes = [
+            node for node in next_nodes
+            if node in user_profile.get("preferred_themes", next_nodes)
+        ]
+        current = random.choice(filtered_nodes) if filtered_nodes else None
         if current:
             story_path.append(current)
     return " -> ".join(story_path)
 
 
-# --- Enriched Narrative Generator ---
-def generate_enriched_narratives(ontology, pathways, cultural_motifs):
-    """Create enriched narratives using reasoning pathways and motifs."""
-    enriched_narratives = []
-    for pathway in pathways:
-        start = pathway["start"]
-        story_path = [start]
-        for step in pathway["pathway"]:
-            story_path.append(step)
-        motif = random.choice(cultural_motifs)["itemLabel"]
-        enriched_narratives.append(f" -> ".join(story_path) + f" (Motif: {motif})")
-    return enriched_narratives
+# --- Multi-Modal Storytelling ---
+def multi_modal_narrative(narrative_text, audio_cues, visual_cues):
+    """Combine text, audio, and visual elements into a cohesive narrative."""
+    return {
+        "text": narrative_text,
+        "audio": random.choice(audio_cues),
+        "visual": random.choice(visual_cues)
+    }
 
 
-# --- Quantum-Inspired Reasoning ---
-def quantum_inspired_reasoning(hypergraph, depth: int):
-    """Generate reasoning pathways using quantum-inspired evaluation."""
-    reasoning_paths = []
-    for node in hypergraph.graph.nodes:
-        successors = list(nx.descendants(hypergraph.graph, node))
-        for path_length in range(1, depth + 1):
-            pathways = itertools.combinations(successors, path_length)
-            for path in pathways:
-                reasoning_paths.append({
-                    "start": node,
-                    "pathway": path,
-                    "confidence": random.uniform(0.8, 1.0)
-                })
-    return reasoning_paths
+# --- AI Collaboration ---
+class StorytellingAgent:
+    """Agent for collaborative storytelling."""
+    def __init__(self, agent_id: str):
+        self.agent_id = agent_id
+        self.local_hypergraph = DecentralizedHypergraphSystem()
+
+    def share_knowledge(self, global_hypergraph: DecentralizedHypergraphSystem):
+        """Share local knowledge with the global hypergraph."""
+        for node, data in self.local_hypergraph.graph.nodes(data=True):
+            global_hypergraph.add_node(node, attributes=data)
+        for u, v, data in self.local_hypergraph.graph.edges(data=True):
+            global_hypergraph.add_edge(u, v, weight=data["weight"], attributes=data)
+
+    def propose_storyline(self, global_hypergraph: DecentralizedHypergraphSystem):
+        """Propose a storyline based on global hypergraph analysis."""
+        reasoning_paths = quantum_inspired_reasoning(global_hypergraph, depth=2)
+        return reasoning_paths[:3]  # Return top 3 proposals
 
 
-# --- Hypergraph Evolution ---
-def evolve_hypergraph(hypergraph, new_nodes, new_edges):
-    """Dynamically update hypergraph structure."""
-    for node in new_nodes:
-        hypergraph.add_node(node)
-    for source, target, weight in new_edges:
-        hypergraph.add_edge(source, target, weight=weight)
+# --- Explainable Narrative Paths ---
+def explain_narrative_path(narrative, reasoning_paths):
+    """Explain the narrative generation process."""
+    explanation = []
+    for i, step in enumerate(narrative.split(" -> ")):
+        path_info = next(
+            (p for p in reasoning_paths if p["start"] == step), None
+        )
+        if path_info:
+            explanation.append({
+                "step": step,
+                "confidence": path_info["confidence"],
+                "reason": f"Linked to {path_info['pathway']} with confidence {path_info['confidence']:.2f}"
+            })
+    return explanation
 
 
-# --- Weight Adjustment Based on Feedback ---
-def adjust_hypergraph_weights(hypergraph, feedback_summary):
-    """Adjust edge weights based on user feedback."""
-    for u, v, data in hypergraph.graph.edges(data=True):
-        if feedback_summary["Positive Feedback"] > feedback_summary["Negative Feedback"]:
-            data["weight"] += 0.1
-        else:
-            data["weight"] -= 0.1
-
-
-# --- API Integration for Cultural Motifs ---
-def fetch_cultural_motifs():
-    """Fetch cultural motifs via Wikidata SPARQL API."""
-    query = """
-    SELECT ?item ?itemLabel WHERE {
-      ?item wdt:P31 wd:Q5003624.
-      SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-    } LIMIT 10
-    """
-    url = "https://query.wikidata.org/sparql"
-    headers = {"Accept": "application/json"}
-    response = requests.get(url, headers=headers, params={"query": query})
-    if response.status_code == 200:
-        return response.json()
-    else:
-        return [{"item": "Error", "itemLabel": "API Unavailable"}]
-
-
-# --- Simulation Execution ---
-def execute_simulation():
-    """Run the full simulation framework."""
-    # Initialize systems
-    global_hypergraph = DecentralizedHypergraphSystem()
+# --- Enhanced Simulation Execution ---
+def execute_enhanced_simulation(user_profile):
+    """Run the enhanced simulation framework."""
+    global_hypergraph = MultiLayerHypergraph()
     adaptive_ontology = AdaptiveOntology()
     feedback_processor = FeedbackProcessor()
 
-    # Base setup
+    # Initialize base nodes and edges
     base_nodes = ["Hero's Dilemma", "Conflict", "Resolution"]
     base_edges = [
         ("Hero's Dilemma", "Conflict", 1.0),
@@ -175,11 +116,11 @@ def execute_simulation():
     for concept, rels in base_relationships.items():
         adaptive_ontology.add_concept(concept, rels)
 
-    # Simulate user feedback
+    # User feedback simulation
     feedback_list = [
-        "The moral conflict was compelling.",
-        "The resolution felt satisfying.",
-        "The pacing could have been slower."
+        "The moral conflict was engaging and well-paced.",
+        "The resolution felt predictable.",
+        "The heroic sacrifice was compelling."
     ]
     for feedback in feedback_list:
         feedback_processor.process_feedback(feedback)
@@ -188,22 +129,35 @@ def execute_simulation():
     # Adjust hypergraph weights
     adjust_hypergraph_weights(global_hypergraph, feedback_summary)
 
-    # Fetch cultural motifs (simulated or real)
-    cultural_motifs = fetch_cultural_motifs()
-
     # Generate reasoning pathways
-    quantum_pathways = quantum_inspired_reasoning(global_hypergraph, depth=2)
+    quantum_pathways = quantum_inspired_reasoning(global_hypergraph, depth=3)
 
-    # Generate enriched narratives
-    enriched_narratives = generate_enriched_narratives(adaptive_ontology, quantum_pathways, cultural_motifs)
+    # Generate personalized narrative
+    narrative = generate_personalized_narrative(adaptive_ontology, "Hero's Dilemma", user_profile)
+
+    # Create multi-modal output
+    audio_cues = ["Heroic music", "Mysterious tones"]
+    visual_cues = ["Sunrise over mountains", "Stormy battlefield"]
+    multi_modal_result = multi_modal_narrative(narrative, audio_cues, visual_cues)
+
+    # Explain narrative path
+    explanation = explain_narrative_path(narrative, quantum_pathways)
 
     return {
-        "Enriched Narratives": enriched_narratives[:5],  # Show top 5 narratives
-        "Ontology Structure": adaptive_ontology.get_ontology(),
+        "Personalized Narrative": narrative,
+        "Multi-Modal Narrative": multi_modal_result,
+        "Narrative Explanation": explanation,
         "Feedback Summary": feedback_summary
     }
 
 
-# Run the simulation
-simulation_results = execute_simulation()
-print(simulation_results)
+# Example User Profile
+user_profile = {
+    "culture": "Western",
+    "psychological_traits": ["optimistic", "adventurous"],
+    "preferred_themes": ["Heroic Sacrifice", "Rebirth"]
+}
+
+# Execute the enhanced simulation
+enhanced_results = execute_enhanced_simulation(user_profile)
+print(enhanced_results)
