@@ -4,24 +4,13 @@ from langchain.chains import RetrievalQA
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
-from langchain.agents import Tool, initialize_agent
 from langchain.prompts import PromptTemplate
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import Document
-from transformers import MarianMTModel, MarianTokenizer
-from flask import Flask, request, jsonify
-import feedparser
-import logging
-from concurrent.futures import ThreadPoolExecutor
-import asyncio
-from celery import Celery
-from prometheus_client import Counter, generate_latest
-import kubernetes
-from kubernetes import client, config
-import pickle
-import requests
-from rdflib import Graph, Namespace, RDF, URIRef, Literal
+from rdflib import Graph, Namespace, URIRef, Literal
 from datetime import datetime
+import logging
+import feedparser
 
 # Set environment variables
 os.environ["OPENAI_API_KEY"] = "your_openai_api_key"
@@ -29,15 +18,12 @@ os.environ["OPENAI_API_KEY"] = "your_openai_api_key"
 # Configure logging
 logging.basicConfig(level=logging.INFO, filename='system.log', format='%(asctime)s - %(message)s')
 
-# Prometheus metrics
-processed_queries = Counter('processed_queries_total', 'Total queries processed')
-
 # Ontology Namespaces
 REA = Namespace("https://www.reaontology.com/schema/")
 ValueFlows = Namespace("https://valueflows.github.io/valueflows/")
 TaxOpt = Namespace("https://www.taxoptimization.com/schema/")
 
-# Step 1: Dynamic Knowledge Base with AI Oracles
+# Step 1: Dynamic Knowledge Base
 class KnowledgeBase:
     def __init__(self):
         self.vector_store = None
@@ -67,7 +53,7 @@ class KnowledgeBase:
         self.add_documents(new_docs)
         logging.info("RSS feed documents added to knowledge base.")
 
-# Step 2: Integration with REA, ValueFlows, and Tax Ontologies
+# Step 2: Ontology Management
 class OntologyManager:
     def __init__(self):
         self.graph = Graph()
@@ -81,17 +67,14 @@ class OntologyManager:
             self.graph.add((entity, URIRef(f"{REA}{key}"), Literal(value)))
         logging.info(f"Entity {entity_id} added to ontology.")
 
-    def add_tax_strategy(self, strategy_id, description, jurisdiction, savings, effective_date):
+    def add_tax_strategy(self, strategy_id, description, jurisdiction, savings):
+        effective_date = datetime.now().strftime("%Y-%m-%d")
         entity = URIRef(f"https://example.org/tax/strategy/{strategy_id}")
         self.graph.add((entity, URIRef(f"{TaxOpt}description"), Literal(description)))
         self.graph.add((entity, URIRef(f"{TaxOpt}jurisdiction"), Literal(jurisdiction)))
         self.graph.add((entity, URIRef(f"{TaxOpt}savings"), Literal(savings)))
         self.graph.add((entity, URIRef(f"{TaxOpt}effective_date"), Literal(effective_date)))
         logging.info(f"Tax optimization strategy {strategy_id} added to ontology.")
-
-    def serialize(self, file_path="ontology.ttl"):
-        self.graph.serialize(file_path, format="turtle")
-        logging.info(f"Ontology serialized to {file_path}.")
 
     def query_tax_strategies(self):
         results = []
@@ -105,121 +88,66 @@ class OntologyManager:
             results.append(strategy)
         return results
 
-# Step 3: ERP Integration and Financial Pipeline Management
-class ERPIntegrator:
-    def __init__(self):
-        self.odoo_base_url = os.getenv("ODOO_BASE_URL", "http://odoo.example.com")
-        self.sap_base_url = os.getenv("SAP_BASE_URL", "http://sap.example.com")
-
-    def send_to_odoo(self, endpoint, data):
-        try:
-            response = requests.post(f"{self.odoo_base_url}/{endpoint}", json=data)
-            logging.info(f"Data sent to Odoo endpoint {endpoint}: {response.status_code}")
-            return response.json()
-        except Exception as e:
-            logging.error(f"Error sending data to Odoo: {e}")
-            return {"error": str(e)}
-
-    def send_to_sap(self, endpoint, data):
-        try:
-            response = requests.post(f"{self.sap_base_url}/{endpoint}", json=data)
-            logging.info(f"Data sent to SAP endpoint {endpoint}: {response.status_code}")
-            return response.json()
-        except Exception as e:
-            logging.error(f"Error sending data to SAP: {e}")
-            return {"error": str(e)}
-
-# Step 4: Dynamic Integration Framework
+# Step 3: NLP-Controlled Interactive Simulation
 class DynamicIntegration:
-    def __init__(self, knowledge_base, ontology_manager, erp_integrator):
+    def __init__(self, knowledge_base, ontology_manager):
         self.knowledge_base = knowledge_base
         self.ontology_manager = ontology_manager
-        self.erp_integrator = erp_integrator
 
-    def process_query(self, query, thread_id):
-        processed_queries.inc()
-        retrieved_docs = self.knowledge_base.query(query)
-        return {
-            "retrieved_docs": retrieved_docs
-        }
+    def process_input(self, user_input):
+        if "query knowledge" in user_input:
+            query = user_input.replace("query knowledge", "").strip()
+            return self.knowledge_base.query(query)
 
-    def add_entity_to_ontology(self, entity_type, entity_id, properties):
-        self.ontology_manager.add_entity(entity_type, entity_id, properties)
-        self.ontology_manager.serialize()
-        return {"status": "Entity added to ontology and serialized."}
+        elif "add tax strategy" in user_input:
+            parts = user_input.split(",")
+            if len(parts) >= 4:
+                strategy_id, description, jurisdiction, savings = [p.strip() for p in parts[1:]]
+                self.ontology_manager.add_tax_strategy(strategy_id, description, jurisdiction, savings)
+                return "Tax strategy added successfully."
+            return "Invalid input. Use format: 'add tax strategy, strategy_id, description, jurisdiction, savings'"
 
-    def add_tax_strategy(self, strategy_id, description, jurisdiction, savings):
-        effective_date = datetime.now().strftime("%Y-%m-%d")
-        self.ontology_manager.add_tax_strategy(strategy_id, description, jurisdiction, savings, effective_date)
-        self.ontology_manager.serialize()
-        return {"status": "Tax optimization strategy added and serialized."}
+        elif "fetch tax strategies" in user_input:
+            strategies = self.ontology_manager.query_tax_strategies()
+            return json.dumps(strategies, indent=2)
 
-    def query_tax_strategies(self):
-        strategies = self.ontology_manager.query_tax_strategies()
-        return {"tax_strategies": strategies}
+        elif "fetch rss" in user_input:
+            url = user_input.replace("fetch rss", "").strip()
+            self.knowledge_base.fetch_rss_documents(url)
+            return "RSS feed fetched and documents added."
 
-    def send_to_erp(self, system, endpoint, data):
-        if system == "odoo":
-            return self.erp_integrator.send_to_odoo(endpoint, data)
-        elif system == "sap":
-            return self.erp_integrator.send_to_sap(endpoint, data)
+        elif "add document" in user_input:
+            content = user_input.replace("add document", "").strip()
+            self.knowledge_base.add_documents([{ "content": content, "metadata": {"source": "manual input"}}])
+            return "Document added successfully."
+
         else:
-            return {"error": "Unsupported ERP system"}
+            return "Command not recognized. Try 'query knowledge', 'add tax strategy', 'fetch tax strategies', 'fetch rss', or 'add document'."
 
-# Flask API for Financial Pipeline Integration
-app = Flask(__name__)
-
-@app.route('/query', methods=['POST'])
-def query():
-    data = request.json
-    query_result = integration.process_query(data['query'], data['thread_id'])
-    return jsonify(query_result)
-
-@app.route('/add_entity', methods=['POST'])
-def add_entity():
-    data = request.json
-    result = integration.add_entity_to_ontology(data['entity_type'], data['entity_id'], data['properties'])
-    return jsonify(result)
-
-@app.route('/add_tax_strategy', methods=['POST'])
-def add_tax_strategy():
-    data = request.json
-    result = integration.add_tax_strategy(
-        data['strategy_id'],
-        data['description'],
-        data['jurisdiction'],
-        data['savings']
-    )
-    return jsonify(result)
-
-@app.route('/query_tax_strategies', methods=['GET'])
-def query_tax_strategies():
-    result = integration.query_tax_strategies()
-    return jsonify(result)
-
-@app.route('/send_to_erp', methods=['POST'])
-def send_to_erp():
-    data = request.json
-    result = integration.send_to_erp(data['system'], data['endpoint'], data['data'])
-    return jsonify(result)
-
-# Main Execution
+# Main Execution with Interactive Prompt
 if __name__ == "__main__":
-    # Initialize knowledge base and managers
+    print("Initializing Financial Pipeline Simulation...")
+
+    # Initialize components
     kb = KnowledgeBase()
     ontology_manager = OntologyManager()
-    erp_integrator = ERPIntegrator()
+    integration = DynamicIntegration(kb, ontology_manager)
 
-    # Ingest initial data
+    # Initial data
     initial_documents = [
         {"content": "EU VAT rules updated for 2024", "metadata": {"source": "eu-commission"}},
         {"content": "German tax code amendments", "metadata": {"source": "germany-finance"}},
         {"content": "New tax optimization strategies in France", "metadata": {"source": "french-finance"}},
     ]
     kb.build_vector_store(initial_documents)
+    print("Knowledge base initialized.")
 
-    # Initialize integration framework
-    integration = DynamicIntegration(kb, ontology_manager, erp_integrator)
-
-    # Start Flask app
-    app.run(debug=True)
+    # Interactive loop
+    print("\nCommands: 'query knowledge <query>', 'add tax strategy, id, description, jurisdiction, savings', 'fetch tax strategies', 'fetch rss <url>', 'add document <content>'")
+    while True:
+        user_input = input("\nEnter your command: ").strip().lower()
+        if user_input in ["exit", "quit"]:
+            print("Exiting simulation. Goodbye!")
+            break
+        response = integration.process_input(user_input)
+        print(response)
