@@ -11,6 +11,7 @@ from rdflib import Graph, Namespace, URIRef, Literal
 from datetime import datetime
 import logging
 import feedparser
+import random
 
 # Set environment variables
 os.environ["OPENAI_API_KEY"] = "your_openai_api_key"
@@ -22,6 +23,7 @@ logging.basicConfig(level=logging.INFO, filename='system.log', format='%(asctime
 REA = Namespace("https://www.reaontology.com/schema/")
 ValueFlows = Namespace("https://valueflows.github.io/valueflows/")
 TaxOpt = Namespace("https://www.taxoptimization.com/schema/")
+Meta = Namespace("https://www.meta-learning.com/schema/")
 
 # Step 1: Dynamic Knowledge Base
 class KnowledgeBase:
@@ -60,6 +62,7 @@ class OntologyManager:
         self.graph.bind("rea", REA)
         self.graph.bind("vf", ValueFlows)
         self.graph.bind("tax", TaxOpt)
+        self.graph.bind("meta", Meta)
 
     def add_entity(self, entity_type, entity_id, properties):
         entity = URIRef(f"https://example.org/{entity_type}/{entity_id}")
@@ -67,66 +70,129 @@ class OntologyManager:
             self.graph.add((entity, URIRef(f"{REA}{key}"), Literal(value)))
         logging.info(f"Entity {entity_id} added to ontology.")
 
-    def add_tax_strategy(self, strategy_id, description, jurisdiction, savings):
-        effective_date = datetime.now().strftime("%Y-%m-%d")
-        entity = URIRef(f"https://example.org/tax/strategy/{strategy_id}")
-        self.graph.add((entity, URIRef(f"{TaxOpt}description"), Literal(description)))
-        self.graph.add((entity, URIRef(f"{TaxOpt}jurisdiction"), Literal(jurisdiction)))
-        self.graph.add((entity, URIRef(f"{TaxOpt}savings"), Literal(savings)))
-        self.graph.add((entity, URIRef(f"{TaxOpt}effective_date"), Literal(effective_date)))
-        logging.info(f"Tax optimization strategy {strategy_id} added to ontology.")
+    def add_meta_learning(self, iteration, improvement, area):
+        entity = URIRef(f"https://example.org/meta/learning/{iteration}")
+        self.graph.add((entity, URIRef(f"{Meta}improvement"), Literal(improvement)))
+        self.graph.add((entity, URIRef(f"{Meta}area"), Literal(area)))
+        self.graph.add((entity, URIRef(f"{Meta}date"), Literal(datetime.now().strftime("%Y-%m-%d"))))
+        logging.info(f"Meta-learning update {iteration} added to ontology.")
 
-    def query_tax_strategies(self):
+    def query_meta_learning(self):
         results = []
-        for s, p, o in self.graph.triples((None, URIRef(f"{TaxOpt}description"), None)):
-            strategy = {
-                "strategy_id": str(s),
-                "description": str(o)
-            }
+        for s, p, o in self.graph.triples((None, URIRef(f"{Meta}improvement"), None)):
+            result = {"iteration": str(s), "improvement": str(o)}
             for _, prop, value in self.graph.triples((s, None, None)):
-                strategy[str(prop).split("/")[-1]] = str(value)
-            results.append(strategy)
+                result[str(prop).split("/")[-1]] = str(value)
+            results.append(result)
         return results
 
-# Step 3: NLP-Controlled Interactive Simulation
+# Step 3: AI Expert Generator
+class AIExpert:
+    def __init__(self, name, expertise_area):
+        self.name = name
+        self.expertise_area = expertise_area
+        self.memory = []
+
+    def respond(self, task_description):
+        response = self.generate_response(task_description)
+        self.memory.append({"task": task_description, "response": response})
+        return response
+
+    def generate_response(self, task_description):
+        prompt = f"You are an expert in {self.expertise_area}. Task: {task_description}. Provide actionable advice."
+        llm = OpenAI()
+        try:
+            return llm(prompt)
+        except Exception as e:
+            logging.error(f"Error generating AI response: {e}")
+            return "Error generating response."
+
+# Step 4: Expert Collaboration and Fusion Coordinator
+class FusionCoordinator:
+    def __init__(self, experts):
+        self.experts = experts
+
+    def collaborate(self, task_description):
+        responses = []
+        for expert in self.experts:
+            logging.info(f"Querying {expert.name} in {expert.expertise_area}.")
+            response = expert.respond(task_description)
+            responses.append({"expert": expert.name, "area": expert.expertise_area, "response": response})
+        return self.fuse_responses(responses)
+
+    def fuse_responses(self, responses):
+        combined_response = "\n".join([f"[{r['expert']}] {r['response']}" for r in responses])
+        logging.info("Responses fused into a unified output.")
+        return f"Fused Expert Response:\n{combined_response}"
+
+# Step 5: Chain-of-Thought (CoT) Plan Generator
+class CoTPlanner:
+    def __init__(self, fusion_coordinator):
+        self.fusion_coordinator = fusion_coordinator
+
+    def generate_plan(self, problem_description):
+        plan_steps = []
+        logging.info("Generating in-depth Chain-of-Thought plan dynamically.")
+        for i in range(3):  # Limiting to 3 iterative steps for now
+            logging.info(f"Iteration {i+1} for CoT planning.")
+            response = self.fusion_coordinator.collaborate(problem_description)
+            plan_steps.append({"step": i+1, "response": response})
+            problem_description = f"Refine and expand: {response}"  # Iterative refinement
+        return plan_steps
+
+# Step 6: NLP-Controlled Interactive Simulation
 class DynamicIntegration:
     def __init__(self, knowledge_base, ontology_manager):
         self.knowledge_base = knowledge_base
         self.ontology_manager = ontology_manager
+        self.experts = []
+        self.fusion_coordinator = None
+        self.cot_planner = None
+
+    def generate_experts(self, num_experts, expertise_areas):
+        for i in range(num_experts):
+            name = f"Expert_{i+1}_{random.randint(1000, 9999)}"
+            area = random.choice(expertise_areas)
+            self.experts.append(AIExpert(name, area))
+        self.fusion_coordinator = FusionCoordinator(self.experts)
+        self.cot_planner = CoTPlanner(self.fusion_coordinator)
+        logging.info(f"Generated {num_experts} AI experts with collaborative fusion.")
 
     def process_input(self, user_input):
         if "query knowledge" in user_input:
             query = user_input.replace("query knowledge", "").strip()
             return self.knowledge_base.query(query)
 
-        elif "add tax strategy" in user_input:
+        elif "add meta learning" in user_input:
             parts = user_input.split(",")
-            if len(parts) >= 4:
-                strategy_id, description, jurisdiction, savings = [p.strip() for p in parts[1:]]
-                self.ontology_manager.add_tax_strategy(strategy_id, description, jurisdiction, savings)
-                return "Tax strategy added successfully."
-            return "Invalid input. Use format: 'add tax strategy, strategy_id, description, jurisdiction, savings'"
+            if len(parts) >= 3:
+                iteration, improvement, area = [p.strip() for p in parts[1:]]
+                self.ontology_manager.add_meta_learning(iteration, improvement, area)
+                return "Meta-learning update added successfully."
+            return "Invalid input. Use format: 'add meta learning, iteration, improvement, area'"
 
-        elif "fetch tax strategies" in user_input:
-            strategies = self.ontology_manager.query_tax_strategies()
-            return json.dumps(strategies, indent=2)
+        elif "generate experts" in user_input:
+            parts = user_input.split(",")
+            if len(parts) >= 2:
+                num_experts = int(parts[1].strip())
+                areas = [area.strip() for area in parts[2:]]
+                self.generate_experts(num_experts, areas)
+                return f"Generated {num_experts} AI experts specializing in {areas}."
+            return "Invalid input. Use format: 'generate experts, num_experts, expertise_area1, expertise_area2,...'"
 
-        elif "fetch rss" in user_input:
-            url = user_input.replace("fetch rss", "").strip()
-            self.knowledge_base.fetch_rss_documents(url)
-            return "RSS feed fetched and documents added."
-
-        elif "add document" in user_input:
-            content = user_input.replace("add document", "").strip()
-            self.knowledge_base.add_documents([{ "content": content, "metadata": {"source": "manual input"}}])
-            return "Document added successfully."
+        elif "generate cot plan" in user_input:
+            description = user_input.replace("generate cot plan", "").strip()
+            if not self.cot_planner:
+                return "No experts available. Generate experts first using 'generate experts'."
+            plan = self.cot_planner.generate_plan(description)
+            return json.dumps(plan, indent=2)
 
         else:
-            return "Command not recognized. Try 'query knowledge', 'add tax strategy', 'fetch tax strategies', 'fetch rss', or 'add document'."
+            return "Command not recognized. Try 'query knowledge', 'add meta learning', 'generate experts', or 'generate cot plan'."
 
 # Main Execution with Interactive Prompt
 if __name__ == "__main__":
-    print("Initializing Financial Pipeline Simulation...")
+    print("Initializing Financial Pipeline Simulation with AI Experts, Fusion Coordinator, and Chain-of-Thought Planning...")
 
     # Initialize components
     kb = KnowledgeBase()
@@ -143,7 +209,7 @@ if __name__ == "__main__":
     print("Knowledge base initialized.")
 
     # Interactive loop
-    print("\nCommands: 'query knowledge <query>', 'add tax strategy, id, description, jurisdiction, savings', 'fetch tax strategies', 'fetch rss <url>', 'add document <content>'")
+    print("\nCommands: 'query knowledge <query>', 'add meta learning, iteration, improvement, area', 'generate experts, num_experts, expertise_area1, expertise_area2,...', 'generate cot plan <description>'")
     while True:
         user_input = input("\nEnter your command: ").strip().lower()
         if user_input in ["exit", "quit"]:
