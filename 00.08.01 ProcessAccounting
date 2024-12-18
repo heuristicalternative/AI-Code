@@ -185,10 +185,7 @@ class DynamicIntegration:
         self.knowledge_base = knowledge_base
         self.ontology_manager = ontology_manager
         self.experts = []
-        self.meta_expert = MetaProgrammingExpert()
-        self.evaluation_expert = EvaluationExpert()
         self.review_expert = ReviewExpert()
-        self.guidance_expert = GuidanceExpert()
         self.memory_manager = LayeredMemory()
         self.pipeline_manager = PipelineManager()
 
@@ -208,54 +205,14 @@ class DynamicIntegration:
     def review_system(self, system_description, existing_code_context):
         return self.review_expert.review_system(system_description, existing_code_context)
 
-    def guide_user(self, intentions, questions):
-        return self.guidance_expert.guide_user(intentions, questions)
-
-    def process_input(self, user_input):
-        if "generate experts" in user_input:
-            parts = user_input.split(",")
-            if len(parts) >= 2:
-                num_experts = int(parts[1].strip())
-                areas = [area.strip() for area in parts[2:]]
-                self.generate_experts(num_experts, areas)
-                return f"Generated {num_experts} AI experts specializing in {areas}."
-            return "Invalid input. Use format: 'generate experts, num_experts, expertise_area1, expertise_area2,...'"
-        elif "add pipeline" in user_input:
-            steps = user_input.replace("add pipeline", "").strip().split(",")
-            return f"Added pipeline with ID: {self.add_pipeline(steps)}"
-        elif "visualize pipeline" in user_input:
-            pipeline_id = user_input.replace("visualize pipeline", "").strip()
-            return self.visualize_pipeline(pipeline_id)
-        elif "review system" in user_input:
-            system_description, existing_code = user_input.replace("review system", "").split("|", 1)
-            return self.review_system(system_description.strip(), existing_code.strip())
-        elif "guide user" in user_input:
-            parts = user_input.split("|")
-            if len(parts) >= 2:
-                intentions = parts[1].strip()
-                questions = parts[2].strip() if len(parts) > 2 else "No specific questions."
-                return self.guide_user(intentions, questions)
-            return "Invalid input. Use format: 'guide user | intentions | questions'"
-        elif "retrieve memory" in user_input:
-            return self.memory_manager.retrieve_summary()
-        else:
-            return "Command not recognized. Try 'generate experts', 'add pipeline <steps>', 'visualize pipeline <pipeline_id>', 'review system | system description | code', 'guide user | intentions | questions', or 'retrieve memory'."
-
 # Main Execution with Interactive Prompt
 if __name__ == "__main__":
     print("Initializing AI System with Dynamic Layered Capabilities...")
-
-    # Initialize components
     kb = KnowledgeBase()
     ontology_manager = OntologyManager()
     integration = DynamicIntegration(kb, ontology_manager)
-
-    # Start Prometheus client
     prometheus_client.start_http_server(8000)
     print("Prometheus metrics available at http://localhost:8000")
-
-    # Interactive loop
-    print("\nCommands: 'generate experts, num_experts, expertise_area1, ...', 'add pipeline <steps>', 'visualize pipeline <pipeline_id>', 'review system | system description | code', 'guide user | intentions | questions', 'retrieve memory'")
     while True:
         user_input = input("\nEnter your command: ").strip().lower()
         if user_input in ["exit", "quit"]:
