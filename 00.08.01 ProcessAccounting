@@ -12,6 +12,8 @@ from datetime import datetime
 import logging
 import feedparser
 import random
+import prometheus_client
+from prometheus_client import Counter, Summary
 
 # Set environment variables
 os.environ["OPENAI_API_KEY"] = "your_openai_api_key"
@@ -24,6 +26,14 @@ REA = Namespace("https://www.reaontology.com/schema/")
 ValueFlows = Namespace("https://valueflows.github.io/valueflows/")
 TaxOpt = Namespace("https://www.taxoptimization.com/schema/")
 Meta = Namespace("https://www.meta-learning.com/schema/")
+
+# Prometheus Metrics
+expert_calls = Counter('expert_calls_total', 'Total calls to AI experts')
+fusion_operations = Counter('fusion_operations_total', 'Total expert fusion operations performed')
+plan_generations = Counter('plan_generations_total', 'Total Chain-of-Thought plans generated')
+response_time = Summary('response_time_seconds', 'Time spent generating responses')
+strategy_comparisons = Counter('strategy_comparisons_total', 'Total comparisons between CoT strategies')
+facilitator_sessions = Counter('facilitator_sessions_total', 'Total facilitated strategy sessions')
 
 # Step 1: Dynamic Knowledge Base
 class KnowledgeBase:
@@ -93,7 +103,9 @@ class AIExpert:
         self.expertise_area = expertise_area
         self.memory = []
 
+    @response_time.time()
     def respond(self, task_description):
+        expert_calls.inc()
         response = self.generate_response(task_description)
         self.memory.append({"task": task_description, "response": response})
         return response
@@ -107,7 +119,27 @@ class AIExpert:
             logging.error(f"Error generating AI response: {e}")
             return "Error generating response."
 
-# Step 4: Expert Collaboration and Fusion Coordinator
+# Step 4: Facilitator AI for Shared Reasoning and Strategy Crafting
+class StrategyFacilitator:
+    def __init__(self, experts):
+        self.experts = experts
+
+    def facilitate_session(self, user_input):
+        facilitator_sessions.inc()
+        session_log = []
+        refined_input = user_input
+
+        for i, expert in enumerate(self.experts):
+            logging.info(f"Facilitator guiding expert {expert.name} for shared reasoning.")
+            response = expert.respond(f"{refined_input} Share reasoning and next steps.")
+            session_log.append({"expert": expert.name, "response": response})
+            refined_input = f"Based on previous suggestion: {response}, provide the next step."
+        
+        combined_strategy = "\n".join([f"Step {i+1}: {log['response']}" for i, log in enumerate(session_log)])
+        logging.info("Facilitator session completed.")
+        return {"session_steps": session_log, "combined_strategy": combined_strategy}
+
+# Step 5: Expert Collaboration, Strategy Generation, and Comparison
 class FusionCoordinator:
     def __init__(self, experts):
         self.experts = experts
@@ -120,25 +152,12 @@ class FusionCoordinator:
             responses.append({"expert": expert.name, "area": expert.expertise_area, "response": response})
         return self.fuse_responses(responses)
 
+    @response_time.time()
     def fuse_responses(self, responses):
+        fusion_operations.inc()
         combined_response = "\n".join([f"[{r['expert']}] {r['response']}" for r in responses])
         logging.info("Responses fused into a unified output.")
         return f"Fused Expert Response:\n{combined_response}"
-
-# Step 5: Chain-of-Thought (CoT) Plan Generator
-class CoTPlanner:
-    def __init__(self, fusion_coordinator):
-        self.fusion_coordinator = fusion_coordinator
-
-    def generate_plan(self, problem_description):
-        plan_steps = []
-        logging.info("Generating in-depth Chain-of-Thought plan dynamically.")
-        for i in range(3):  # Limiting to 3 iterative steps for now
-            logging.info(f"Iteration {i+1} for CoT planning.")
-            response = self.fusion_coordinator.collaborate(problem_description)
-            plan_steps.append({"step": i+1, "response": response})
-            problem_description = f"Refine and expand: {response}"  # Iterative refinement
-        return plan_steps
 
 # Step 6: NLP-Controlled Interactive Simulation
 class DynamicIntegration:
@@ -147,7 +166,7 @@ class DynamicIntegration:
         self.ontology_manager = ontology_manager
         self.experts = []
         self.fusion_coordinator = None
-        self.cot_planner = None
+        self.facilitator = None
 
     def generate_experts(self, num_experts, expertise_areas):
         for i in range(num_experts):
@@ -155,21 +174,20 @@ class DynamicIntegration:
             area = random.choice(expertise_areas)
             self.experts.append(AIExpert(name, area))
         self.fusion_coordinator = FusionCoordinator(self.experts)
-        self.cot_planner = CoTPlanner(self.fusion_coordinator)
-        logging.info(f"Generated {num_experts} AI experts with collaborative fusion.")
+        self.facilitator = StrategyFacilitator(self.experts)
+        logging.info(f"Generated {num_experts} AI experts with collaborative fusion and facilitation capabilities.")
 
     def process_input(self, user_input):
-        if "query knowledge" in user_input:
+        if "facilitate strategy" in user_input:
+            session_input = user_input.replace("facilitate strategy", "").strip()
+            if not self.facilitator:
+                return "No experts available. Generate experts first using 'generate experts'."
+            session = self.facilitator.facilitate_session(session_input)
+            return json.dumps(session, indent=2)
+
+        elif "query knowledge" in user_input:
             query = user_input.replace("query knowledge", "").strip()
             return self.knowledge_base.query(query)
-
-        elif "add meta learning" in user_input:
-            parts = user_input.split(",")
-            if len(parts) >= 3:
-                iteration, improvement, area = [p.strip() for p in parts[1:]]
-                self.ontology_manager.add_meta_learning(iteration, improvement, area)
-                return "Meta-learning update added successfully."
-            return "Invalid input. Use format: 'add meta learning, iteration, improvement, area'"
 
         elif "generate experts" in user_input:
             parts = user_input.split(",")
@@ -180,19 +198,12 @@ class DynamicIntegration:
                 return f"Generated {num_experts} AI experts specializing in {areas}."
             return "Invalid input. Use format: 'generate experts, num_experts, expertise_area1, expertise_area2,...'"
 
-        elif "generate cot plan" in user_input:
-            description = user_input.replace("generate cot plan", "").strip()
-            if not self.cot_planner:
-                return "No experts available. Generate experts first using 'generate experts'."
-            plan = self.cot_planner.generate_plan(description)
-            return json.dumps(plan, indent=2)
-
         else:
-            return "Command not recognized. Try 'query knowledge', 'add meta learning', 'generate experts', or 'generate cot plan'."
+            return "Command not recognized. Try 'query knowledge', 'generate experts', or 'facilitate strategy'."
 
 # Main Execution with Interactive Prompt
 if __name__ == "__main__":
-    print("Initializing Financial Pipeline Simulation with AI Experts, Fusion Coordinator, and Chain-of-Thought Planning...")
+    print("Initializing AI Simulation with Strategy Facilitation and Expert Collaboration...")
 
     # Initialize components
     kb = KnowledgeBase()
@@ -208,8 +219,12 @@ if __name__ == "__main__":
     kb.build_vector_store(initial_documents)
     print("Knowledge base initialized.")
 
+    # Start Prometheus client
+    prometheus_client.start_http_server(8000)
+    print("Prometheus metrics available at http://localhost:8000")
+
     # Interactive loop
-    print("\nCommands: 'query knowledge <query>', 'add meta learning, iteration, improvement, area', 'generate experts, num_experts, expertise_area1, expertise_area2,...', 'generate cot plan <description>'")
+    print("\nCommands: 'query knowledge <query>', 'generate experts, num_experts, expertise_area1, expertise_area2,...', 'facilitate strategy <task description>'")
     while True:
         user_input = input("\nEnter your command: ").strip().lower()
         if user_input in ["exit", "quit"]:
