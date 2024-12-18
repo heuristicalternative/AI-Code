@@ -36,6 +36,7 @@ class EnhancedAIObserver:
         self.meta_mapping_engine = None
         self.recursive_analysis_logs = []
         self.model = SentenceTransformer('all-MiniLM-L6-v2')  # Semantic similarity model
+        self.rag_memory = defaultdict(list)  # RAG memory storage for enhanced retrieval
 
     def ingest_thread(self, thread_id, conversation_data):
         """Ingests a past thread for learning and contextual awareness."""
@@ -124,6 +125,16 @@ class EnhancedAIObserver:
 
         print(f"[AI Observer] Identified dependencies: {dependencies}")
         return dependencies
+
+    def retrieve_rag_insights(self, query):
+        """Retrieves insights from RAG memory for enhanced learning."""
+        insights = []
+        for context_id, entries in self.rag_memory.items():
+            for entry in entries:
+                if query.lower() in entry.get("content", "").lower():
+                    insights.append(entry)
+        print(f"[RAG] Retrieved {len(insights)} insights for query: '{query}'")
+        return insights
 
     def generate_actionable_insights(self):
         """Generate insights and actions based on dynamic intentionality evolution."""
