@@ -1,11 +1,41 @@
+import subprocess
+import sys
 import matplotlib.pyplot as plt
 import networkx as nx
 from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
 from collections import defaultdict
 import threading
 import traceback
 import numpy as np
+
+# Check if subprocess can execute commands
+def can_use_subprocess():
+    try:
+        subprocess.check_call([sys.executable, "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except Exception:
+        return False
+
+# Ensure all required packages are installed with a failsafe mechanism
+def ensure_package_installed(package_name):
+    try:
+        __import__(package_name)
+    except ImportError:
+        if can_use_subprocess():
+            try:
+                print(f"[Self-Healing] {package_name} not found. Installing...")
+                subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
+            except Exception as e:
+                print(f"[Error] Failed to install {package_name} using subprocess. Error: {e}")
+                traceback.print_exc()
+        else:
+            print(f"[Warning] {package_name} not installed. Subprocess execution is not supported in this environment.")
+
+required_packages = ["sentence_transformers", "scikit-learn", "matplotlib", "networkx", "numpy"]
+for package in required_packages:
+    ensure_package_installed(package)
+
+from sentence_transformers import SentenceTransformer
 
 class EnhancedAIObserver:
     """Enhanced AI Observer with advanced clustering, dependency mapping, and scalability improvements."""
@@ -61,6 +91,24 @@ class EnhancedAIObserver:
             return clusters
         except Exception as e:
             print(f"[Error] Failed to cluster intents. Error: {e}")
+            traceback.print_exc()
+
+    def evaluate_clustering_effectiveness(self, clusters):
+        """Evaluates the quality of intent clustering using semantic similarity."""
+        try:
+            cluster_scores = {}
+            for cluster_id, intents in clusters.items():
+                if len(intents) > 1:
+                    embeddings = self.model.encode(intents)
+                    similarity_matrix = cosine_similarity(embeddings)
+                    avg_similarity = np.triu(similarity_matrix, k=1).mean()  # Upper triangle mean
+                    cluster_scores[cluster_id] = avg_similarity
+                else:
+                    cluster_scores[cluster_id] = 1.0  # Single-intent cluster
+            print(f"[AI Observer] Clustering Effectiveness Scores: {cluster_scores}")
+            return cluster_scores
+        except Exception as e:
+            print(f"[Error] Failed to evaluate clustering effectiveness. Error: {e}")
             traceback.print_exc()
 
     def dependency_mapping(self, pipeline_id):
@@ -136,12 +184,15 @@ class EnhancedAIObserver:
 
 # Enhanced Execution with Cross-Thread Learning and Advanced Features
 
-def enhanced_advanced_execution(observer):
-    """Enhanced execution loop with advanced clustering, dependency mapping, and more."""
+def enhanced_recursive_execution(observer):
+    """Enhanced execution loop with recursive evaluation and dynamic feedback."""
     observer.enable_cross_thread_learning()
 
     # Semantic intent clustering
     clusters = observer.semantic_intent_clustering()
+
+    # Evaluate clustering effectiveness
+    cluster_scores = observer.evaluate_clustering_effectiveness(clusters)
 
     # Refine pipelines and map dependencies
     pipeline_id = "Pipeline_6"
@@ -164,6 +215,6 @@ def enhanced_advanced_execution(observer):
     # Feedback loop optimization
     optimized_feedback = observer.feedback_loop_optimization()
 
-# Initialize the observer and run the enhanced execution loop
+# Initialize the observer and run the enhanced recursive execution loop
 observer = EnhancedAIObserver()
-enhanced_advanced_execution(observer)
+enhanced_recursive_execution(observer)
