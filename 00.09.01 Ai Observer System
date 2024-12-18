@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 from collections import defaultdict
+import threading
 import traceback
 
 class EnhancedAIObserver:
-    """Enhanced AI Observer with dynamic thread retrieval and learning integration."""
+    """Enhanced AI Observer with dynamic thread retrieval, learning integration, and scalability improvements."""
     def __init__(self):
         self.thread_contexts = {}
         self.observed_ais = {}
@@ -50,10 +51,43 @@ class EnhancedAIObserver:
             print(f"[Error] Failed to refine pipeline '{pipeline_id}'. Error: {e}")
             traceback.print_exc()
 
+    def allocate_resources(self, pipeline_id):
+        """Dynamically allocates resources to a pipeline based on workload."""
+        try:
+            workload = len(self.dynamic_pipelines[pipeline_id]["tasks"])
+            resources = max(1, min(workload // 2, 10))  # Example allocation logic
+            print(f"[AI Observer] Allocated {resources} resource units to pipeline '{pipeline_id}'.")
+            return resources
+        except Exception as e:
+            print(f"[Error] Failed to allocate resources for pipeline '{pipeline_id}'. Error: {e}")
+            traceback.print_exc()
+
+    def execute_experts_concurrently(self):
+        """Runs all dynamic experts concurrently."""
+        try:
+            threads = []
+            for expert in self.dynamic_experts:
+                thread = threading.Thread(target=self.execute_expert_tasks, args=(expert,))
+                threads.append(thread)
+                thread.start()
+            for thread in threads:
+                thread.join()
+        except Exception as e:
+            print(f"[Error] Failed to execute experts concurrently. Error: {e}")
+            traceback.print_exc()
+
+    def execute_expert_tasks(self, expert):
+        """Simulates execution of tasks by an expert."""
+        try:
+            for capability in expert["capabilities"]:
+                print(f"[AI Observer] Expert '{expert['name']}' is processing: {capability}")
+        except Exception as e:
+            print(f"[Error] Failed to execute tasks for expert '{expert['name']}'. Error: {e}")
+            traceback.print_exc()
+
     def retrieve_historical_threads(self):
         """Simulates retrieval of historical threads from the OpenAI account."""
         try:
-            # Simulated historical threads (replace with actual retrieval mechanism if available)
             simulated_threads = {
                 "thread_1": [
                     {"intent": "recursive learning", "content": "Iterative refinement systems."},
@@ -149,73 +183,22 @@ class EnhancedAIObserver:
             print(f"[Error] Failed to create dynamic expert '{name}'. Error: {e}")
             traceback.print_exc()
 
-    def integrate_dynamic_experts(self):
-        """Integrates the output and learning from dynamic experts back into the system."""
-        try:
-            for expert in self.dynamic_experts:
-                for capability in expert["capabilities"]:
-                    print(f"[AI Observer] Expert '{expert['name']}' contributes: {capability}")
-                    # Simulate learning from expert outputs
-                    self.dynamic_intentionality[capability] += 1
-        except Exception as e:
-            print(f"[Error] Failed to integrate dynamic experts. Error: {e}")
-            traceback.print_exc()
-
 # Enhanced Execution with Cross-Thread Learning and Dynamic Expert Integration
-def enhanced_execution_with_dynamic_learning(observer):
-    """Enhanced execution loop with additional historical threads and expert creation."""
+def enhanced_scalability_execution(observer):
+    """Enhanced execution loop focusing on scalability."""
+    observer.enable_cross_thread_learning()
 
-    # Simulate expanded historical threads
-    additional_threads = {
-        "thread_4": [
-            {"intent": "knowledge harmonization", "content": "Align multi-agent knowledge."},
-            {"intent": "scalable systems", "content": "Design systems that scale with demand."},
-        ],
-        "thread_5": [
-            {"intent": "task automation", "content": "Automate repetitive workflows."},
-            {"intent": "multi-agent learning", "content": "Enable agents to learn collaboratively."},
-        ],
-    }
-    observer.enable_cross_thread_learning(previous_threads=additional_threads)
+    # Refine pipelines and allocate resources dynamically
+    pipeline_id = "Pipeline_6"
+    observer.refine_pipeline(pipeline_id, ["Task 1", "Task 2", "Task 3", "Task 4"])
+    observer.allocate_resources(pipeline_id)
 
-    # Process new real-time conversation inputs
-    real_time_inputs = [
-        {"intent": "enhance knowledge sharing", "content": "Improve collaborative frameworks."},
-        {"intent": "optimize scalability", "content": "Refine systems for large-scale deployment."},
-    ]
-    for entry in real_time_inputs:
-        observer.ingest_thread_entry(entry)
+    # Deploy dynamic experts
+    observer.create_dynamic_expert("ScalabilityExpert", ["Optimize scalability", "Refine modular design"])
 
-    # Dynamically observe new AI systems
-    observer.observe_ai_system(
-        ai_id="KnowledgeIntegratorAI",
-        ai_description="AI for harmonizing multi-agent knowledge.",
-        capabilities=["Knowledge alignment", "Collaborative learning"],
-    )
-
-    observer.observe_ai_system(
-        ai_id="ScalabilityOptimizerAI",
-        ai_description="AI for optimizing scalable system design.",
-        capabilities=["Scalability refinement", "Demand-driven design"],
-    )
-
-    # Generate actionable mappings
-    meta_mappings = observer.generate_actionable_meta_mapping()
-    print("\n[Enhanced AI Observer] Updated Meta-Mappings:", meta_mappings)
-
-    # Deploy dynamic experts based on gaps
-    for ai_id, data in meta_mappings.items():
-        if not data["related_intents"]:
-            expert_name = f"ExpertFor_{ai_id}"
-            capabilities = data["potential_tasks"]
-            observer.create_dynamic_expert(expert_name, capabilities)
-
-    # Integrate outputs from dynamic experts
-    observer.integrate_dynamic_experts()
-
-    # Visualize updated mappings
-    observer.visualize_meta_mappings()
+    # Execute experts in parallel
+    observer.execute_experts_concurrently()
 
 # Initialize the observer and run the enhanced execution loop
 observer = EnhancedAIObserver()
-enhanced_execution_with_dynamic_learning(observer)
+enhanced_scalability_execution(observer)
