@@ -14,6 +14,8 @@ import feedparser
 import random
 import prometheus_client
 from prometheus_client import Counter, Summary
+import matplotlib.pyplot as plt
+import networkx as nx
 
 # Set environment variables
 os.environ["OPENAI_API_KEY"] = "your_openai_api_key"
@@ -34,6 +36,7 @@ plan_generations = Counter('plan_generations_total', 'Total Chain-of-Thought pla
 response_time = Summary('response_time_seconds', 'Time spent generating responses')
 strategy_comparisons = Counter('strategy_comparisons_total', 'Total comparisons between CoT strategies')
 facilitator_sessions = Counter('facilitator_sessions_total', 'Total facilitated strategy sessions')
+user_feedback_received = Counter('user_feedback_total', 'Total user feedback received')
 
 # Step 1: Dynamic Knowledge Base
 class KnowledgeBase:
@@ -59,12 +62,6 @@ class KnowledgeBase:
         )
         return qa.run(query)
 
-    def fetch_rss_documents(self, url):
-        feed = feedparser.parse(url)
-        new_docs = [{"content": entry.summary, "metadata": {"source": entry.link}} for entry in feed.entries]
-        self.add_documents(new_docs)
-        logging.info("RSS feed documents added to knowledge base.")
-
 # Step 2: Ontology Management
 class OntologyManager:
     def __init__(self):
@@ -86,15 +83,6 @@ class OntologyManager:
         self.graph.add((entity, URIRef(f"{Meta}area"), Literal(area)))
         self.graph.add((entity, URIRef(f"{Meta}date"), Literal(datetime.now().strftime("%Y-%m-%d"))))
         logging.info(f"Meta-learning update {iteration} added to ontology.")
-
-    def query_meta_learning(self):
-        results = []
-        for s, p, o in self.graph.triples((None, URIRef(f"{Meta}improvement"), None)):
-            result = {"iteration": str(s), "improvement": str(o)}
-            for _, prop, value in self.graph.triples((s, None, None)):
-                result[str(prop).split("/")[-1]] = str(value)
-            results.append(result)
-        return results
 
 # Step 3: AI Expert Generator
 class AIExpert:
@@ -119,7 +107,31 @@ class AIExpert:
             logging.error(f"Error generating AI response: {e}")
             return "Error generating response."
 
-# Step 4: Facilitator AI for Shared Reasoning and Strategy Crafting
+# Step 4: Strategy Validation and Visualization
+class ValidationManager:
+    @staticmethod
+    def validate_strategy(strategy):
+        # Simulate strategy validation
+        logging.info("Validating strategy.")
+        score = random.uniform(0.5, 1.0)  # Simulated score between 0.5 and 1.0
+        return {"strategy": strategy, "score": round(score, 2)}
+
+    @staticmethod
+    def visualize_strategy(steps):
+        graph = nx.DiGraph()
+        for i, step in enumerate(steps):
+            graph.add_node(i, label=f"Step {i+1}\n{step}")
+            if i > 0:
+                graph.add_edge(i-1, i)
+
+        pos = nx.spring_layout(graph)
+        labels = nx.get_node_attributes(graph, 'label')
+        plt.figure(figsize=(10, 6))
+        nx.draw(graph, pos, with_labels=True, labels=labels, node_color='skyblue', node_size=3000, font_size=10)
+        plt.title("Strategy Visualization")
+        plt.show()
+
+# Step 5: Facilitator AI with User Feedback
 class StrategyFacilitator:
     def __init__(self, experts):
         self.experts = experts
@@ -132,40 +144,35 @@ class StrategyFacilitator:
         for i, expert in enumerate(self.experts):
             logging.info(f"Facilitator guiding expert {expert.name} for shared reasoning.")
             response = expert.respond(f"{refined_input} Share reasoning and next steps.")
-            session_log.append({"expert": expert.name, "response": response})
-            refined_input = f"Based on previous suggestion: {response}, provide the next step."
+            print(f"{expert.name}: {response}")
+            user_feedback = input("Your feedback (accept/refine/reject): ").strip().lower()
+            user_feedback_received.inc()
+            session_log.append({"expert": expert.name, "response": response, "feedback": user_feedback})
+            if user_feedback == "refine":
+                refined_input = input("Please refine the input: ").strip()
+            elif user_feedback == "reject":
+                refined_input = input("Please describe a new approach: ").strip()
+            else:
+                refined_input = f"Based on previous suggestion: {response}, provide the next step."
         
-        combined_strategy = "\n".join([f"Step {i+1}: {log['response']}" for i, log in enumerate(session_log)])
-        logging.info("Facilitator session completed.")
-        return {"session_steps": session_log, "combined_strategy": combined_strategy}
+        combined_strategy = [log['response'] for log in session_log if log['feedback'] != 'reject']
+        logging.info("Facilitator session completed with user feedback.")
+        return combined_strategy
 
-# Step 5: Expert Collaboration, Strategy Generation, and Comparison
-class FusionCoordinator:
-    def __init__(self, experts):
-        self.experts = experts
+# Step 6: Result Display Management
+class ResultDisplay:
+    @staticmethod
+    def show_iterative_results(results):
+        for idx, result in enumerate(results):
+            print(f"Result {idx + 1}: {json.dumps(result, indent=2)}")
+            input("Press Enter to see the next result...")
 
-    def collaborate(self, task_description):
-        responses = []
-        for expert in self.experts:
-            logging.info(f"Querying {expert.name} in {expert.expertise_area}.")
-            response = expert.respond(task_description)
-            responses.append({"expert": expert.name, "area": expert.expertise_area, "response": response})
-        return self.fuse_responses(responses)
-
-    @response_time.time()
-    def fuse_responses(self, responses):
-        fusion_operations.inc()
-        combined_response = "\n".join([f"[{r['expert']}] {r['response']}" for r in responses])
-        logging.info("Responses fused into a unified output.")
-        return f"Fused Expert Response:\n{combined_response}"
-
-# Step 6: NLP-Controlled Interactive Simulation
+# Step 7: NLP-Controlled Interactive Simulation
 class DynamicIntegration:
     def __init__(self, knowledge_base, ontology_manager):
         self.knowledge_base = knowledge_base
         self.ontology_manager = ontology_manager
         self.experts = []
-        self.fusion_coordinator = None
         self.facilitator = None
 
     def generate_experts(self, num_experts, expertise_areas):
@@ -173,9 +180,8 @@ class DynamicIntegration:
             name = f"Expert_{i+1}_{random.randint(1000, 9999)}"
             area = random.choice(expertise_areas)
             self.experts.append(AIExpert(name, area))
-        self.fusion_coordinator = FusionCoordinator(self.experts)
         self.facilitator = StrategyFacilitator(self.experts)
-        logging.info(f"Generated {num_experts} AI experts with collaborative fusion and facilitation capabilities.")
+        logging.info(f"Generated {num_experts} AI experts.")
 
     def process_input(self, user_input):
         if "facilitate strategy" in user_input:
@@ -183,11 +189,10 @@ class DynamicIntegration:
             if not self.facilitator:
                 return "No experts available. Generate experts first using 'generate experts'."
             session = self.facilitator.facilitate_session(session_input)
-            return json.dumps(session, indent=2)
-
-        elif "query knowledge" in user_input:
-            query = user_input.replace("query knowledge", "").strip()
-            return self.knowledge_base.query(query)
+            ValidationManager.visualize_strategy(session)
+            validated_result = ValidationManager.validate_strategy(session)
+            ResultDisplay.show_iterative_results(session)
+            return json.dumps({"validated_strategy": validated_result}, indent=2)
 
         elif "generate experts" in user_input:
             parts = user_input.split(",")
@@ -199,32 +204,23 @@ class DynamicIntegration:
             return "Invalid input. Use format: 'generate experts, num_experts, expertise_area1, expertise_area2,...'"
 
         else:
-            return "Command not recognized. Try 'query knowledge', 'generate experts', or 'facilitate strategy'."
+            return "Command not recognized. Try 'generate experts' or 'facilitate strategy'."
 
 # Main Execution with Interactive Prompt
 if __name__ == "__main__":
-    print("Initializing AI Simulation with Strategy Facilitation and Expert Collaboration...")
+    print("Initializing AI Simulation with Strategy Facilitation, Validation, and Visualization...")
 
     # Initialize components
     kb = KnowledgeBase()
     ontology_manager = OntologyManager()
     integration = DynamicIntegration(kb, ontology_manager)
 
-    # Initial data
-    initial_documents = [
-        {"content": "EU VAT rules updated for 2024", "metadata": {"source": "eu-commission"}},
-        {"content": "German tax code amendments", "metadata": {"source": "germany-finance"}},
-        {"content": "New tax optimization strategies in France", "metadata": {"source": "french-finance"}},
-    ]
-    kb.build_vector_store(initial_documents)
-    print("Knowledge base initialized.")
-
     # Start Prometheus client
     prometheus_client.start_http_server(8000)
     print("Prometheus metrics available at http://localhost:8000")
 
     # Interactive loop
-    print("\nCommands: 'query knowledge <query>', 'generate experts, num_experts, expertise_area1, expertise_area2,...', 'facilitate strategy <task description>'")
+    print("\nCommands: 'generate experts, num_experts, expertise_area1, expertise_area2,...', 'facilitate strategy <task description>'")
     while True:
         user_input = input("\nEnter your command: ").strip().lower()
         if user_input in ["exit", "quit"]:
