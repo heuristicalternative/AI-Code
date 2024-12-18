@@ -28,15 +28,17 @@ for package in required_packages:
     ensure_package_installed(package)
 
 class EnhancedAIObserver:
-    """AI Observer for recursive learning, dynamic expert creation, and intentionality alignment."""
+    """AI Observer for recursive learning, dynamic AI Tokens, and intentionality alignment."""
     def __init__(self):
         self.thread_contexts = {}
         self.dynamic_intentionality = []
         self.milestones = []
         self.meta_mapping_engine = None
         self.recursive_analysis_logs = []
+        self.tokens = []
+        self.mapping_engine = MappingEngine()  # New mapping engine for visualization
         self.model = SentenceTransformer('all-MiniLM-L6-v2')  # Semantic similarity model
-        self.rag_memory = defaultdict(list)  # RAG memory storage for enhanced retrieval
+        self.ethical_engine = EthicalEngine()  # Integrating philosophical reasoning
 
     def ingest_thread(self, thread_id, conversation_data):
         """Ingests a past thread for learning and contextual awareness."""
@@ -55,125 +57,60 @@ class EnhancedAIObserver:
         self.recursive_analysis_logs.append(f"Cross-thread analysis performed for {len(self.thread_contexts)} threads.")
         return combined_intentionality
 
-    def refine_dynamic_intentionality(self):
-        """Refines the dynamic intentionality based on cross-thread insights."""
-        refined = defaultdict(int)
-        for layer in self.dynamic_intentionality:
-            for key, value in layer.items():
-                refined[key] += value
-        return refined
+    def recursive_learning(self):
+        """Executes recursive learning by running the observer on itself."""
+        print("[Observer] Running recursive learning...")
+        self_insights = self.generate_actionable_insights()
+        self.recursive_analysis_logs.append(f"Self-observation insights: {self_insights}")
+        return self_insights
 
-    def semantic_intent_clustering(self):
-        """Clusters similar intents across all threads using semantic similarity."""
-        all_intents = []
-        thread_intents = {}
-        for thread_id, entries in self.thread_contexts.items():
-            thread_intents[thread_id] = [entry["intent"] for entry in entries if "intent" in entry]
-            all_intents.extend(thread_intents[thread_id])
+    def integrate_hypergraph_models(self, elements):
+        """Integrates hypergraphs and causal sets to model complex relationships."""
+        hypergraph = HyperGraph(elements)
+        print(f"[AI Observer] Hypergraph generated with {len(elements)} elements.")
+        return hypergraph
 
-        embeddings = self.model.encode(all_intents)
-        similarity_matrix = cosine_similarity(embeddings)
+    def run_ai_token_simulation(self):
+        """Simulates the behavior of AI Tokens in a distributed environment."""
+        print("[Observer] Simulating AI Token interactions...")
+        for token in self.tokens:
+            result = token.perform_task()
+            print(f"[AI Token] {token.name} completed task: {result}")
 
-        clusters = defaultdict(list)
-        visited = set()
+    def ethical_decision_evaluation(self, scenarios):
+        """Evaluates decisions using the ethical engine."""
+        print("[Observer] Running ethical evaluation...")
+        results = []
+        for scenario in scenarios:
+            result = self.ethical_engine.evaluate(scenario)
+            results.append(result)
+            print(f"[Ethical Evaluation] Scenario: {scenario} -> Result: {result}")
+        return results
 
-        for i, intent in enumerate(all_intents):
-            if i in visited:
-                continue
-            cluster_id = len(clusters)
-            clusters[cluster_id].append(intent)
-            visited.add(i)
-            for j in range(len(all_intents)):
-                if j not in visited and similarity_matrix[i][j] > 0.8:  # Similarity threshold
-                    clusters[cluster_id].append(all_intents[j])
-                    visited.add(j)
+    def advanced_meta_mapping(self):
+        """Generates meta-mappings to track system evolution."""
+        print("[Observer] Generating advanced meta-mapping...")
+        mappings = self.mapping_engine.generate_meta_maps(self.thread_contexts)
+        return mappings
 
-        print(f"[AI Observer] Identified {len(clusters)} semantic intent clusters.")
-        return clusters
+# Supporting Classes for Additional Capabilities
 
-    def compare_intentionalities(self):
-        """Compares intentionalities across threads to assess alignment and divergences."""
-        intent_vectors = []
-        intents_list = list(set([intent for layer in self.dynamic_intentionality for intent in layer.keys()]))
-        
-        for layer in self.dynamic_intentionality:
-            vector = [layer.get(intent, 0) for intent in intents_list]
-            intent_vectors.append(vector)
+class MappingEngine:
+    """Mapping engine for dependency trees, hypergraphs, and visualizations."""
+    def generate_meta_maps(self, thread_contexts):
+        meta_maps = {}
+        for thread_id, contexts in thread_contexts.items():
+            dependencies = {entry["intent"]: entry.get("dependencies", []) for entry in contexts}
+            meta_maps[thread_id] = dependencies
+        print("[Mapping Engine] Meta-maps generated for all threads.")
+        return meta_maps
 
-        similarity_matrix = cosine_similarity(intent_vectors)
-        return similarity_matrix, intents_list
-
-    def identify_milestones(self, similarity_matrix, threshold=0.8):
-        """Identifies milestones when intentionalities align beyond a threshold."""
-        aligned_pairs = []
-        for i in range(len(similarity_matrix)):
-            for j in range(i + 1, len(similarity_matrix)):
-                if similarity_matrix[i][j] >= threshold:
-                    aligned_pairs.append((i, j))
-        self.milestones.extend(aligned_pairs)
-        self.recursive_analysis_logs.append(f"Milestones identified with threshold {threshold}: {aligned_pairs}")
-        return aligned_pairs
-
-    def dependency_mapping(self, pipeline_id, tasks):
-        """Identifies dependencies between tasks in a pipeline and historical threads."""
-        dependencies = []
-        for task in tasks:
-            for thread_id, entries in self.thread_contexts.items():
-                for entry in entries:
-                    if task in entry.get("content", ""):
-                        dependencies.append((task, entry.get("intent", "Unknown")))
-
-        print(f"[AI Observer] Identified dependencies: {dependencies}")
-        return dependencies
-
-    def retrieve_rag_insights(self, query):
-        """Retrieves insights from RAG memory for enhanced learning."""
-        insights = []
-        for context_id, entries in self.rag_memory.items():
-            for entry in entries:
-                if query.lower() in entry.get("content", "").lower():
-                    insights.append(entry)
-        print(f"[RAG] Retrieved {len(insights)} insights for query: '{query}'")
-        return insights
-
-    def generate_actionable_insights(self):
-        """Generate insights and actions based on dynamic intentionality evolution."""
-        refined_intentionality = self.refine_dynamic_intentionality()
-        insights = {
-            "high_priority_intents": [k for k, v in refined_intentionality.items() if v > 5],
-            "emerging_patterns": [k for k, v in refined_intentionality.items() if 2 < v <= 5],
-            "low_priority_intents": [k for k, v in refined_intentionality.items() if v <= 2]
-        }
-        print(f"[AI Observer] Generated insights: {insights}")
-        self.recursive_analysis_logs.append(f"Actionable insights generated: {insights}")
-        return insights
-
-    def advanced_visualizations(self):
-        """Generates temporal trends in dynamic intentionality and highlights critical shifts."""
-        intents, counts = zip(*sorted(self.refine_dynamic_intentionality().items(), key=lambda x: x[1]))
-        plt.figure(figsize=(12, 6))
-        plt.plot(intents, counts, marker="o")
-        plt.title("Temporal Trends in Dynamic Intentionality")
-        plt.xlabel("Intents")
-        plt.ylabel("Frequency")
-        plt.xticks(rotation=45, ha="right")
-        plt.tight_layout()
-        plt.show()
-
-    def create_dynamic_expert(self, expertise_area):
-        """Creates and deploys a dynamic AI expert for a specific task."""
-        expert = DynamicAIExpert(name=f"Expert_{expertise_area}", expertise_area=expertise_area)
-        self.recursive_analysis_logs.append(f"Dynamic expert created for expertise area: {expertise_area}")
-        return expert
-
-    def run_self_observation(self):
-        """Runs the Observer on itself to analyze and refine its own processes."""
-        self.recursive_analysis_logs.append("Running self-observation...")
-        self_analyzed_insights = self.generate_actionable_insights()
-        self.recursive_analysis_logs.append(f"Self-observation insights: {self_analyzed_insights}")
-        return self_analyzed_insights
-
-# Dynamic AI Expert Class
+class EthicalEngine:
+    """Ethical engine for evaluating decisions and system alignment."""
+    def evaluate(self, scenario):
+        """Evaluate a scenario using ethical principles."""
+        # Placeholder for ethical reasoning logic
+        return {"decision": "aligned", "details": "Positive externalities maximized."}
 
 class DynamicAIExpert:
     """Dynamic AI Expert for specialized tasks."""
@@ -181,52 +118,43 @@ class DynamicAIExpert:
         self.name = name
         self.expertise_area = expertise_area
 
-    def perform_task(self, task_description):
+    def perform_task(self, task_description="Default Task"):
         print(f"[{self.name}] Performing task in {self.expertise_area}: {task_description}")
         return f"Task result for {task_description}"
 
-# Main Execution
+# Main Execution Function
 
-def run_advanced_observer_system():
+def execute_enhanced_observer():
     """Run the enhanced AI Observer system."""
     observer = EnhancedAIObserver()
 
-    # Simulated ingestion of past threads (from June 2024 onwards)
-    past_threads = {
+    # Simulate thread ingestion
+    threads = {
         "thread_1": [
-            {"intent": "explore AI Tokens"},
-            {"intent": "develop recursive learning"},
-            {"intent": "enhance governance models"}
+            {"intent": "explore AI Tokens", "content": "AI token stigmergy discussion"},
+            {"intent": "enhance governance models", "content": "Feedback loops exploration"}
         ],
         "thread_2": [
-            {"intent": "optimize resource allocation"},
-            {"intent": "integrate stigmergic markers"},
-            {"intent": "advance meta-mapping"}
+            {"intent": "optimize resource allocation", "content": "Stigmergic coordination example"}
         ]
     }
 
-    for thread_id, data in past_threads.items():
+    for thread_id, data in threads.items():
         observer.ingest_thread(thread_id, data)
 
-    # Cross-thread analysis
-    combined_intentionality = observer.analyze_cross_threads()
-    similarity_matrix, intents_list = observer.compare_intentionalities()
-    milestones = observer.identify_milestones(similarity_matrix)
+    # Analyze threads and generate insights
+    observer.analyze_cross_threads()
+    observer.recursive_learning()
 
-    # Simulation and learning
-    recommendations = observer.generate_actionable_insights()
+    # Run AI Token simulation
+    observer.run_ai_token_simulation()
 
-    # Visualization of results
-    observer.advanced_visualizations()
+    # Evaluate ethical decisions
+    ethical_scenarios = ["scenario_1", "scenario_2"]
+    observer.ethical_decision_evaluation(ethical_scenarios)
 
-    # Self-observation
-    self_observation_results = observer.run_self_observation()
-    print(f"[AI Observer] Self-Observation Results: {self_observation_results}")
+    # Generate meta-mapping
+    observer.advanced_meta_mapping()
 
-    # Create and test dynamic expert
-    expert = observer.create_dynamic_expert("Resource Optimization")
-    result = expert.perform_task("Optimize resource flows across threads")
-    print(f"Dynamic Expert Result: {result}")
-
-# Execute the enhanced system
-run_advanced_observer_system()
+# Execute the system
+execute_enhanced_observer()
