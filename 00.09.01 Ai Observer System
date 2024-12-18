@@ -1,169 +1,159 @@
-# Enhanced AI Observer System with Recursive Learning and Dynamic Expert Integration
-
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from collections import defaultdict
 import matplotlib.pyplot as plt
 import networkx as nx
+from collections import defaultdict
+import traceback
 
 class EnhancedAIObserver:
-    """AI Observer for recursive learning, dynamic expert creation, and intentionality alignment."""
+    """Enhanced AI Observer with advanced learning, self-healing, and integration capabilities."""
     def __init__(self):
         self.thread_contexts = {}
-        self.dynamic_intentionality = []
-        self.milestones = []
-        self.meta_mapping_engine = None
+        self.observed_ais = {}
+        self.dynamic_pipelines = {}
+        self.meta_mapping_logs = []
         self.recursive_analysis_logs = []
+        self.dynamic_intentionality = defaultdict(int)
 
-    def ingest_thread(self, thread_id, conversation_data):
-        """Ingests a past thread for learning and contextual awareness."""
-        self.thread_contexts[thread_id] = conversation_data
-        print(f"[AI Observer] Ingested thread {thread_id} with {len(conversation_data)} entries.")
+    def ingest_thread_entry(self, entry):
+        """Ingests a single conversation entry dynamically with self-healing."""
+        try:
+            thread_id = "current_thread"
+            if thread_id not in self.thread_contexts:
+                self.thread_contexts[thread_id] = []
+            self.thread_contexts[thread_id].append(entry)
+            print(f"[AI Observer] Ingested new thread entry: {entry}")
+        except Exception as e:
+            print(f"[Error] Failed to ingest thread entry: {entry}. Error: {e}")
+            traceback.print_exc()
 
-    def analyze_cross_threads(self):
-        """Performs cross-thread analysis to identify overlapping patterns, insights, and gaps."""
-        combined_intentionality = defaultdict(int)
-        for thread_id, data in self.thread_contexts.items():
-            for entry in data:
-                intent = entry.get("intent")
-                if intent:
-                    combined_intentionality[intent] += 1
-        self.dynamic_intentionality.append(combined_intentionality)
-        self.recursive_analysis_logs.append(f"Cross-thread analysis performed for {len(self.thread_contexts)} threads.")
-        return combined_intentionality
+    def observe_ai_system(self, ai_id, ai_description, capabilities):
+        """Observes and categorizes a new AI system."""
+        try:
+            self.observed_ais[ai_id] = {
+                "description": ai_description,
+                "capabilities": capabilities,
+            }
+            print(f"[AI Observer] Observed AI system '{ai_id}' with capabilities: {capabilities}")
+        except Exception as e:
+            print(f"[Error] Failed to observe AI system '{ai_id}'. Error: {e}")
+            traceback.print_exc()
 
-    def refine_dynamic_intentionality(self):
-        """Refines the dynamic intentionality based on cross-thread insights."""
-        refined = defaultdict(int)
-        for layer in self.dynamic_intentionality:
-            for key, value in layer.items():
-                refined[key] += value
-        return refined
+    def refine_pipeline(self, pipeline_id, tasks):
+        """Refines or creates a dynamic pipeline."""
+        try:
+            self.dynamic_pipelines[pipeline_id] = {
+                "tasks": tasks,
+                "status": "Refined",
+            }
+            print(f"[AI Observer] Refined pipeline '{pipeline_id}': {tasks}")
+        except Exception as e:
+            print(f"[Error] Failed to refine pipeline '{pipeline_id}'. Error: {e}")
+            traceback.print_exc()
 
-    def compare_intentionalities(self):
-        """Compares intentionalities across threads to assess alignment and divergences."""
-        intent_vectors = []
-        intents_list = list(set([intent for layer in self.dynamic_intentionality for intent in layer.keys()]))
-        
-        for layer in self.dynamic_intentionality:
-            vector = [layer.get(intent, 0) for intent in intents_list]
-            intent_vectors.append(vector)
+    def enable_cross_thread_learning(self, previous_threads):
+        """Learns from previously stored threads and integrates insights with self-healing."""
+        try:
+            for thread_id, data in previous_threads.items():
+                self.thread_contexts[thread_id] = data
+                for entry in data:
+                    intent = entry.get("intent")
+                    if intent:
+                        self.dynamic_intentionality[intent] += 1
+            print(f"[AI Observer] Cross-thread learning enabled with {len(previous_threads)} threads.")
+        except Exception as e:
+            print(f"[Error] Failed to enable cross-thread learning. Error: {e}")
+            traceback.print_exc()
 
-        similarity_matrix = cosine_similarity(intent_vectors)
-        return similarity_matrix, intents_list
+    def generate_actionable_meta_mapping(self):
+        """Generates actionable meta-mappings between observed systems and threads."""
+        try:
+            mappings = {}
+            for ai_id, ai_data in self.observed_ais.items():
+                mappings[ai_id] = {
+                    "related_intents": [
+                        intent for intent in self.dynamic_intentionality if intent in ai_data["capabilities"]
+                    ],
+                    "potential_tasks": [f"Enhance {cap}" for cap in ai_data["capabilities"]],
+                }
+            self.meta_mapping_logs.append(mappings)
+            return mappings
+        except Exception as e:
+            print(f"[Error] Failed to generate meta-mappings. Error: {e}")
+            traceback.print_exc()
 
-    def identify_milestones(self, similarity_matrix, threshold=0.8):
-        """Identifies milestones when intentionalities align beyond a threshold."""
-        aligned_pairs = []
-        for i in range(len(similarity_matrix)):
-            for j in range(i + 1, len(similarity_matrix)):
-                if similarity_matrix[i][j] >= threshold:
-                    aligned_pairs.append((i, j))
-        self.milestones.extend(aligned_pairs)
-        self.recursive_analysis_logs.append(f"Milestones identified with threshold {threshold}: {aligned_pairs}")
-        return aligned_pairs
+    def recursive_self_analysis(self):
+        """Analyzes and refines the observer's internal processes with self-healing."""
+        try:
+            self.recursive_analysis_logs.append("Running recursive self-analysis...")
+            insights = self.generate_actionable_meta_mapping()
+            self.recursive_analysis_logs.append(f"Recursive insights: {insights}")
+            return insights
+        except Exception as e:
+            print(f"[Error] Recursive self-analysis failed. Error: {e}")
+            traceback.print_exc()
 
-    def generate_actionable_insights(self):
-        """Generate insights and actions based on dynamic intentionality evolution."""
-        refined_intentionality = self.refine_dynamic_intentionality()
-        insights = {
-            "high_priority_intents": [k for k, v in refined_intentionality.items() if v > 5],
-            "emerging_patterns": [k for k, v in refined_intentionality.items() if 2 < v <= 5],
-            "low_priority_intents": [k for k, v in refined_intentionality.items() if v <= 2]
-        }
-        print(f"[AI Observer] Generated insights: {insights}")
-        self.recursive_analysis_logs.append(f"Actionable insights generated: {insights}")
-        return insights
+    def visualize_meta_mappings(self):
+        """Visualizes the meta-mappings and AI relationships."""
+        try:
+            G = nx.DiGraph()
+            for ai_id, data in self.meta_mapping_logs[-1].items():
+                G.add_node(ai_id, label="AI System")
+                for intent in data["related_intents"]:
+                    G.add_node(intent, label="Intent")
+                    G.add_edge(intent, ai_id)
 
-    def create_dynamic_expert(self, expertise_area):
-        """Creates and deploys a dynamic AI expert for a specific task."""
-        expert = DynamicAIExpert(name=f"Expert_{expertise_area}", expertise_area=expertise_area)
-        self.recursive_analysis_logs.append(f"Dynamic expert created for expertise area: {expertise_area}")
-        return expert
+            plt.figure(figsize=(10, 8))
+            nx.draw(G, with_labels=True, node_color="lightblue", edge_color="gray")
+            plt.title("Meta-Mapping Visualization")
+            plt.show()
+        except Exception as e:
+            print(f"[Error] Visualization failed. Error: {e}")
+            traceback.print_exc()
 
-    def simulate_learning(self):
-        """Simulates the Observer's cross-thread learning and adaptive recommendations."""
-        insights = self.generate_actionable_insights()
-        recommendations = {
-            "focus": insights["high_priority_intents"],
-            "exploration": insights["emerging_patterns"],
-            "deprioritize": insights["low_priority_intents"]
-        }
-        print(f"[AI Observer] Recommendations: {recommendations}")
-        self.recursive_analysis_logs.append(f"Learning simulation completed with recommendations: {recommendations}")
-        return recommendations
+    def create_dynamic_expert(self, name, capabilities):
+        """Creates a dynamic AI expert to address identified gaps."""
+        try:
+            print(f"[AI Observer] Creating dynamic expert '{name}' with capabilities: {capabilities}")
+            return {"name": name, "capabilities": capabilities, "status": "Active"}
+        except Exception as e:
+            print(f"[Error] Failed to create dynamic expert '{name}'. Error: {e}")
+            traceback.print_exc()
 
-    def visualize_milestones(self):
-        """Visualizes the milestones and alignments."""
-        graph = nx.Graph()
-        for pair in self.milestones:
-            graph.add_edge(pair[0], pair[1])
-        plt.figure(figsize=(8, 6))
-        nx.draw(graph, with_labels=True, node_color='lightblue', edge_color='gray')
-        plt.title("Milestone Visualization")
-        plt.show()
+# Enhanced Execution Loop with Visualization
+def real_time_execution_with_visualization(observer):
+    """Runs the Enhanced AI Observer system with visualization capabilities."""
+    print("\n[Enhanced AI Observer] Starting Real-Time Execution with Visualization...\n")
 
-    def run_self_observation(self):
-        """Runs the Observer on itself to analyze and refine its own processes."""
-        self.recursive_analysis_logs.append("Running self-observation...")
-        self_analyzed_insights = self.generate_actionable_insights()
-        self.recursive_analysis_logs.append(f"Self-observation insights: {self_analyzed_insights}")
-        return self_analyzed_insights
+    # Simulate dynamic conversation inputs
+    conversation_inputs = [
+        {"intent": "optimize meta-mapping", "content": "Enhance cross-thread alignment."},
+        {"intent": "improve recursive systems", "content": "Focus on self-refining pipelines."},
+        {"intent": "expand learning capabilities", "content": "Develop multi-agent collaboration."},
+    ]
 
-# Dynamic AI Expert Class
+    for entry in conversation_inputs:
+        observer.ingest_thread_entry(entry)
 
-class DynamicAIExpert:
-    """Dynamic AI Expert for specialized tasks."""
-    def __init__(self, name, expertise_area):
-        self.name = name
-        self.expertise_area = expertise_area
+    # Dynamically observe new AI systems
+    observer.observe_ai_system(
+        ai_id="MultiAgentCollaborator",
+        ai_description="AI system for multi-agent interaction and learning.",
+        capabilities=["Collaboration", "Knowledge sharing"],
+    )
 
-    def perform_task(self, task_description):
-        print(f"[{self.name}] Performing task in {self.expertise_area}: {task_description}")
-        return f"Task result for {task_description}"
+    observer.observe_ai_system(
+        ai_id="PipelineOptimizerAI",
+        ai_description="AI specializing in pipeline efficiency.",
+        capabilities=["Task optimization", "Dynamic pipeline refinement"],
+    )
 
-# Main Execution
+    # Refine pipelines and create new outputs
+    observer.refine_pipeline("Pipeline_4", ["Optimize collaboration", "Refine recursive systems"])
 
-def run_advanced_observer_system():
-    """Run the enhanced AI Observer system."""
-    observer = EnhancedAIObserver()
+    # Generate actionable mappings and visualize
+    meta_mappings = observer.generate_actionable_meta_mapping()
+    print("\n[Enhanced AI Observer] Meta-Mappings Generated:", meta_mappings)
+    observer.visualize_meta_mappings()
 
-    # Simulated ingestion of past threads (from June 2024 onwards)
-    past_threads = {
-        "thread_1": [
-            {"intent": "explore AI Tokens"},
-            {"intent": "develop recursive learning"},
-            {"intent": "enhance governance models"}
-        ],
-        "thread_2": [
-            {"intent": "optimize resource allocation"},
-            {"intent": "integrate stigmergic markers"},
-            {"intent": "advance meta-mapping"}
-        ]
-    }
-
-    for thread_id, data in past_threads.items():
-        observer.ingest_thread(thread_id, data)
-
-    # Cross-thread analysis
-    combined_intentionality = observer.analyze_cross_threads()
-    similarity_matrix, intents_list = observer.compare_intentionalities()
-    milestones = observer.identify_milestones(similarity_matrix)
-
-    # Simulation and learning
-    recommendations = observer.simulate_learning()
-
-    # Visualization of results
-    observer.visualize_milestones()
-
-    # Self-observation
-    self_observation_results = observer.run_self_observation()
-    print(f"[AI Observer] Self-Observation Results: {self_observation_results}")
-
-    # Create and test dynamic expert
-    expert = observer.create_dynamic_expert("Resource Optimization")
-    result = expert.perform_task("Optimize resource flows across threads")
-    print(f"Dynamic Expert Result: {result}")
-
-# Execute the enhanced system
-run_advanced_observer_system()
+# Initialize and run the enhanced observer with visualization
+observer = EnhancedAIObserver()
+real_time_execution_with_visualization(observer)
