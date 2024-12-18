@@ -16,6 +16,7 @@ import prometheus_client
 from prometheus_client import Counter, Summary
 import matplotlib.pyplot as plt
 import networkx as nx
+import hypernetx as hnx
 
 # Set environment variables
 os.environ["OPENAI_API_KEY"] = "your_openai_api_key"
@@ -37,6 +38,7 @@ response_time = Summary('response_time_seconds', 'Time spent generating response
 strategy_comparisons = Counter('strategy_comparisons_total', 'Total comparisons between CoT strategies')
 facilitator_sessions = Counter('facilitator_sessions_total', 'Total facilitated strategy sessions')
 user_feedback_received = Counter('user_feedback_total', 'Total user feedback received')
+feedback_storage_operations = Counter('feedback_storage_operations_total', 'Total feedback storage operations')
 
 # Step 1: Dynamic Knowledge Base
 class KnowledgeBase:
@@ -84,6 +86,13 @@ class OntologyManager:
         self.graph.add((entity, URIRef(f"{Meta}date"), Literal(datetime.now().strftime("%Y-%m-%d"))))
         logging.info(f"Meta-learning update {iteration} added to ontology.")
 
+    def add_feedback(self, feedback_id, feedback_data):
+        entity = URIRef(f"https://example.org/feedback/{feedback_id}")
+        for key, value in feedback_data.items():
+            self.graph.add((entity, URIRef(f"{Meta}{key}"), Literal(value)))
+        feedback_storage_operations.inc()
+        logging.info(f"Feedback {feedback_id} stored in ontology.")
+
 # Step 3: AI Expert Generator
 class AIExpert:
     def __init__(self, name, expertise_area):
@@ -107,7 +116,23 @@ class AIExpert:
             logging.error(f"Error generating AI response: {e}")
             return "Error generating response."
 
-# Step 4: Strategy Validation and Visualization
+# Step 4: Hypergraph Management
+class HypergraphManager:
+    @staticmethod
+    def build_hypergraph(strategy_steps):
+        logging.info("Building hypergraph from strategy steps.")
+        edges = [(step, next_step) for step, next_step in zip(strategy_steps, strategy_steps[1:])]
+        hypergraph = hnx.Hypergraph(edges)
+        return hypergraph
+
+    @staticmethod
+    def visualize_hypergraph(hypergraph):
+        plt.figure(figsize=(8, 6))
+        hnx.draw(hypergraph, with_edge_labels=True, node_color='lightblue', edge_color='gray')
+        plt.title("Hypergraph Visualization")
+        plt.show()
+
+# Step 5: Strategy Validation and Visualization
 class ValidationManager:
     @staticmethod
     def validate_strategy(strategy):
@@ -131,10 +156,11 @@ class ValidationManager:
         plt.title("Strategy Visualization")
         plt.show()
 
-# Step 5: Facilitator AI with User Feedback
+# Step 6: Facilitator AI with User Feedback
 class StrategyFacilitator:
-    def __init__(self, experts):
+    def __init__(self, experts, ontology_manager):
         self.experts = experts
+        self.ontology_manager = ontology_manager
 
     def facilitate_session(self, user_input):
         facilitator_sessions.inc()
@@ -147,7 +173,15 @@ class StrategyFacilitator:
             print(f"{expert.name}: {response}")
             user_feedback = input("Your feedback (accept/refine/reject): ").strip().lower()
             user_feedback_received.inc()
-            session_log.append({"expert": expert.name, "response": response, "feedback": user_feedback})
+            feedback_data = {
+                "expert": expert.name,
+                "response": response,
+                "feedback": user_feedback,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            feedback_id = f"feedback_{i}_{datetime.now().timestamp()}"
+            self.ontology_manager.add_feedback(feedback_id, feedback_data)
+            session_log.append(feedback_data)
             if user_feedback == "refine":
                 refined_input = input("Please refine the input: ").strip()
             elif user_feedback == "reject":
@@ -159,7 +193,7 @@ class StrategyFacilitator:
         logging.info("Facilitator session completed with user feedback.")
         return combined_strategy
 
-# Step 6: Result Display Management
+# Step 7: Result Display Management
 class ResultDisplay:
     @staticmethod
     def show_iterative_results(results):
@@ -167,7 +201,7 @@ class ResultDisplay:
             print(f"Result {idx + 1}: {json.dumps(result, indent=2)}")
             input("Press Enter to see the next result...")
 
-# Step 7: NLP-Controlled Interactive Simulation
+# Step 8: NLP-Controlled Interactive Simulation
 class DynamicIntegration:
     def __init__(self, knowledge_base, ontology_manager):
         self.knowledge_base = knowledge_base
@@ -180,7 +214,7 @@ class DynamicIntegration:
             name = f"Expert_{i+1}_{random.randint(1000, 9999)}"
             area = random.choice(expertise_areas)
             self.experts.append(AIExpert(name, area))
-        self.facilitator = StrategyFacilitator(self.experts)
+        self.facilitator = StrategyFacilitator(self.experts, self.ontology_manager)
         logging.info(f"Generated {num_experts} AI experts.")
 
     def process_input(self, user_input):
@@ -191,6 +225,8 @@ class DynamicIntegration:
             session = self.facilitator.facilitate_session(session_input)
             ValidationManager.visualize_strategy(session)
             validated_result = ValidationManager.validate_strategy(session)
+            hypergraph = HypergraphManager.build_hypergraph(session)
+            HypergraphManager.visualize_hypergraph(hypergraph)
             ResultDisplay.show_iterative_results(session)
             return json.dumps({"validated_strategy": validated_result}, indent=2)
 
