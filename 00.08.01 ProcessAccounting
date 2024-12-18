@@ -138,28 +138,33 @@ class AIExpert:
             logging.error(f"Error generating AI response: {e}")
             return "Error generating response."
 
-# Step 8: AI Review Expert
-class ReviewExpert(AIExpert):
+# Step 4: Guidance Expert with Intent Recognition
+class GuidanceExpert(AIExpert):
     def __init__(self):
-        super().__init__(name="ReviewExpert", expertise_area="System Review and Enhancement Suggestions")
+        super().__init__(name="GuidanceExpert", expertise_area="Strategic Guidance and Intent Understanding")
+        self.contextual_memory = []  # Stores user interactions for personalized guidance
 
-    def review_system(self, system_description, existing_code_context):
+    def guide_user(self, intentions, questions):
+        self.contextual_memory.append({"intentions": intentions, "questions": questions})
         prompt = (
-            f"You are an expert in reviewing and enhancing AI systems for business intelligence, tax optimization, and pipeline management.\n"
-            f"System Description: {system_description}\n"
-            f"Existing Code Context: {existing_code_context}\n"
-            f"Identify enhancements, suggest integration of open-source tools, and highlight improvements for strategic and financial pipelines."
+            f"You are an expert in understanding user intentions and providing learning guidance.\n"
+            f"User Intentions: {intentions}\n"
+            f"Questions: {questions}\n"
+            f"Provide clear guidance, suggestions, and exploration strategies for achieving the user's goals."
         )
         return self.generate_response(prompt)
 
-# Step 9: Pipeline Manager
+    def retrieve_contextual_guidance(self):
+        return self.contextual_memory
+
+# Step 5: Pipeline Manager with Optimization and Versioning
 class PipelineManager:
     def __init__(self):
         self.pipelines = []
 
     def add_pipeline(self, pipeline_steps):
         pipeline_id = f"pipeline_{len(self.pipelines) + 1}"
-        self.pipelines.append({"id": pipeline_id, "steps": pipeline_steps})
+        self.pipelines.append({"id": pipeline_id, "steps": pipeline_steps, "version": 1})
         logging.info(f"Pipeline {pipeline_id} added with steps: {pipeline_steps}")
         return pipeline_id
 
@@ -179,13 +184,23 @@ class PipelineManager:
         plt.title(f"Pipeline Visualization: {pipeline_id}")
         plt.show()
 
-# Step 10: Dynamic Integration with Layered Interactions
+    def optimize_pipeline(self, pipeline_id, optimization_data):
+        pipeline = next((p for p in self.pipelines if p["id"] == pipeline_id), None)
+        if pipeline:
+            pipeline["steps"] = optimization_data.get("optimized_steps", pipeline["steps"])
+            pipeline["version"] += 1
+            logging.info(f"Pipeline {pipeline_id} optimized to version {pipeline['version']}.")
+            return pipeline
+        return f"Pipeline {pipeline_id} not found."
+
+# Step 6: Enhanced Dynamic Integration
 class DynamicIntegration:
     def __init__(self, knowledge_base, ontology_manager):
         self.knowledge_base = knowledge_base
         self.ontology_manager = ontology_manager
         self.experts = []
         self.review_expert = ReviewExpert()
+        self.guidance_expert = GuidanceExpert()
         self.memory_manager = LayeredMemory()
         self.pipeline_manager = PipelineManager()
 
@@ -202,12 +217,18 @@ class DynamicIntegration:
     def visualize_pipeline(self, pipeline_id):
         return self.pipeline_manager.visualize_pipeline(pipeline_id)
 
+    def optimize_pipeline(self, pipeline_id, optimization_data):
+        return self.pipeline_manager.optimize_pipeline(pipeline_id, optimization_data)
+
+    def guide_user(self, intentions, questions):
+        return self.guidance_expert.guide_user(intentions, questions)
+
     def review_system(self, system_description, existing_code_context):
         return self.review_expert.review_system(system_description, existing_code_context)
 
-# Main Execution with Interactive Prompt
+# Main Execution
 if __name__ == "__main__":
-    print("Initializing AI System with Dynamic Layered Capabilities...")
+    print("Initializing Enhanced AI System with Dynamic Layered Capabilities...")
     kb = KnowledgeBase()
     ontology_manager = OntologyManager()
     integration = DynamicIntegration(kb, ontology_manager)
