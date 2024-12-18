@@ -39,6 +39,28 @@ strategy_comparisons = Counter('strategy_comparisons_total', 'Total comparisons 
 facilitator_sessions = Counter('facilitator_sessions_total', 'Total facilitated strategy sessions')
 user_feedback_received = Counter('user_feedback_total', 'Total user feedback received')
 feedback_storage_operations = Counter('feedback_storage_operations_total', 'Total feedback storage operations')
+meta_programming_calls = Counter('meta_programming_calls_total', 'Total calls to meta-programming AI')
+
+# Step 0: Layered Memory Management
+class LayeredMemory:
+    def __init__(self):
+        self.low_resource_memory = []  # Compressed lightweight memory
+        self.high_level_summaries = []  # High-level persistent summaries for failsafe recovery
+
+    def store_compressed(self, entry):
+        compressed_entry = {key: len(str(value)) for key, value in entry.items()}  # Simple size-based compression
+        self.low_resource_memory.append(compressed_entry)
+        logging.info("Stored compressed entry in low-resource memory.")
+
+    def store_summary(self, summary):
+        self.high_level_summaries.append({"summary": summary, "timestamp": datetime.now()})
+        logging.info("Stored high-level summary for failsafe recovery.")
+
+    def retrieve_compressed(self):
+        return self.low_resource_memory
+
+    def retrieve_summary(self):
+        return self.high_level_summaries
 
 # Step 1: Dynamic Knowledge Base
 class KnowledgeBase:
@@ -116,121 +138,71 @@ class AIExpert:
             logging.error(f"Error generating AI response: {e}")
             return "Error generating response."
 
-# Step 4: Hypergraph Management
-class HypergraphManager:
-    @staticmethod
-    def build_hypergraph(strategy_steps):
-        logging.info("Building hypergraph from strategy steps.")
-        edges = [(step, next_step) for step, next_step in zip(strategy_steps, strategy_steps[1:])]
-        hypergraph = hnx.Hypergraph(edges)
-        return hypergraph
+# Step 8: AI Guidance Expert
+class GuidanceExpert(AIExpert):
+    def __init__(self):
+        super().__init__(name="GuidanceExpert", expertise_area="Strategic Guidance and Intent Understanding")
 
-    @staticmethod
-    def visualize_hypergraph(hypergraph):
-        plt.figure(figsize=(8, 6))
-        hnx.draw(hypergraph, with_edge_labels=True, node_color='lightblue', edge_color='gray')
-        plt.title("Hypergraph Visualization")
-        plt.show()
+    def guide_user(self, intentions, questions):
+        prompt = (
+            f"You are an expert in understanding user intentions and providing learning guidance.\n"
+            f"User Intentions: {intentions}\n"
+            f"Questions: {questions}\n"
+            f"Provide clear guidance, suggestions, and exploration strategies for achieving the user's goals."
+        )
+        return self.generate_response(prompt)
 
-# Step 5: Strategy Validation and Visualization
-class ValidationManager:
-    @staticmethod
-    def validate_strategy(strategy):
-        # Simulate strategy validation
-        logging.info("Validating strategy.")
-        score = random.uniform(0.5, 1.0)  # Simulated score between 0.5 and 1.0
-        return {"strategy": strategy, "score": round(score, 2)}
+# Step 9: Dynamic Evaluation Expert
+class EvaluationExpert(AIExpert):
+    def __init__(self):
+        super().__init__(name="EvaluationExpert", expertise_area="System Coherence and Contribution Testing")
 
-    @staticmethod
-    def visualize_strategy(steps):
-        graph = nx.DiGraph()
-        for i, step in enumerate(steps):
-            graph.add_node(i, label=f"Step {i+1}\n{step}")
-            if i > 0:
-                graph.add_edge(i-1, i)
+    def evaluate_changes(self, recent_changes, full_context):
+        meta_programming_calls.inc()
+        prompt = (
+            f"Evaluate the following changes to the system for coherence, usefulness, and alignment with objectives:\n\n"
+            f"Recent Changes: {recent_changes}\n\n"
+            f"Full System Context: {full_context}\n\n"
+            f"Provide recommendations: retain, refine, or revert, with reasons."
+        )
+        return self.generate_response(prompt)
 
-        pos = nx.spring_layout(graph)
-        labels = nx.get_node_attributes(graph, 'label')
-        plt.figure(figsize=(10, 6))
-        nx.draw(graph, pos, with_labels=True, labels=labels, node_color='skyblue', node_size=3000, font_size=10)
-        plt.title("Strategy Visualization")
-        plt.show()
-
-# Step 6: Facilitator AI with User Feedback
-class StrategyFacilitator:
-    def __init__(self, experts, ontology_manager):
-        self.experts = experts
-        self.ontology_manager = ontology_manager
-
-    def facilitate_session(self, user_input):
-        facilitator_sessions.inc()
-        session_log = []
-        refined_input = user_input
-
-        for i, expert in enumerate(self.experts):
-            logging.info(f"Facilitator guiding expert {expert.name} for shared reasoning.")
-            response = expert.respond(f"{refined_input} Share reasoning and next steps.")
-            print(f"{expert.name}: {response}")
-            user_feedback = input("Your feedback (accept/refine/reject): ").strip().lower()
-            user_feedback_received.inc()
-            feedback_data = {
-                "expert": expert.name,
-                "response": response,
-                "feedback": user_feedback,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            feedback_id = f"feedback_{i}_{datetime.now().timestamp()}"
-            self.ontology_manager.add_feedback(feedback_id, feedback_data)
-            session_log.append(feedback_data)
-            if user_feedback == "refine":
-                refined_input = input("Please refine the input: ").strip()
-            elif user_feedback == "reject":
-                refined_input = input("Please describe a new approach: ").strip()
-            else:
-                refined_input = f"Based on previous suggestion: {response}, provide the next step."
-        
-        combined_strategy = [log['response'] for log in session_log if log['feedback'] != 'reject']
-        logging.info("Facilitator session completed with user feedback.")
-        return combined_strategy
-
-# Step 7: Result Display Management
-class ResultDisplay:
-    @staticmethod
-    def show_iterative_results(results):
-        for idx, result in enumerate(results):
-            print(f"Result {idx + 1}: {json.dumps(result, indent=2)}")
-            input("Press Enter to see the next result...")
-
-# Step 8: NLP-Controlled Interactive Simulation
+# Step 10: Dynamic Integration with Guidance and Layered Memory
 class DynamicIntegration:
     def __init__(self, knowledge_base, ontology_manager):
         self.knowledge_base = knowledge_base
         self.ontology_manager = ontology_manager
         self.experts = []
-        self.facilitator = None
+        self.meta_expert = MetaProgrammingExpert()
+        self.evaluation_expert = EvaluationExpert()
+        self.guidance_expert = GuidanceExpert()
+        self.memory_manager = LayeredMemory()
 
     def generate_experts(self, num_experts, expertise_areas):
         for i in range(num_experts):
             name = f"Expert_{i+1}_{random.randint(1000, 9999)}"
             area = random.choice(expertise_areas)
             self.experts.append(AIExpert(name, area))
-        self.facilitator = StrategyFacilitator(self.experts, self.ontology_manager)
         logging.info(f"Generated {num_experts} AI experts.")
 
-    def process_input(self, user_input):
-        if "facilitate strategy" in user_input:
-            session_input = user_input.replace("facilitate strategy", "").strip()
-            if not self.facilitator:
-                return "No experts available. Generate experts first using 'generate experts'."
-            session = self.facilitator.facilitate_session(session_input)
-            ValidationManager.visualize_strategy(session)
-            validated_result = ValidationManager.validate_strategy(session)
-            hypergraph = HypergraphManager.build_hypergraph(session)
-            HypergraphManager.visualize_hypergraph(hypergraph)
-            ResultDisplay.show_iterative_results(session)
-            return json.dumps({"validated_strategy": validated_result}, indent=2)
+    def evaluate_hybrid_ai(self):
+        results = HybridAIEvaluator.evaluate_combinations()
+        print("\nHybrid AI Evaluation Results:")
+        for combination, score in results.items():
+            print(f"{combination}: {score}")
 
-        elif "generate experts" in user_input:
+    def evaluate_recent_changes(self, recent_changes):
+        print("Evaluation Expert Analyzing Recent Changes...")
+        full_context = summarize_changes()
+        recommendation = self.evaluation_expert.evaluate_changes(recent_changes, full_context)
+        self.memory_manager.store_summary(recommendation)
+        return recommendation
+
+    def guide_user(self, intentions, questions):
+        return self.guidance_expert.guide_user(intentions, questions)
+
+    def process_input(self, user_input):
+        if "generate experts" in user_input:
             parts = user_input.split(",")
             if len(parts) >= 2:
                 num_experts = int(parts[1].strip())
@@ -238,13 +210,26 @@ class DynamicIntegration:
                 self.generate_experts(num_experts, areas)
                 return f"Generated {num_experts} AI experts specializing in {areas}."
             return "Invalid input. Use format: 'generate experts, num_experts, expertise_area1, expertise_area2,...'"
-
+        elif "evaluate hybrid ai" in user_input:
+            return self.evaluate_hybrid_ai()
+        elif "evaluate changes" in user_input:
+            recent_changes = user_input.replace("evaluate changes", "").strip()
+            return self.evaluate_recent_changes(recent_changes)
+        elif "guide user" in user_input:
+            parts = user_input.split("|")
+            if len(parts) >= 2:
+                intentions = parts[1].strip()
+                questions = parts[2].strip() if len(parts) > 2 else "No specific questions."
+                return self.guide_user(intentions, questions)
+            return "Invalid input. Use format: 'guide user | intentions | questions'"
+        elif "retrieve memory" in user_input:
+            return self.memory_manager.retrieve_summary()
         else:
-            return "Command not recognized. Try 'generate experts' or 'facilitate strategy'."
+            return "Command not recognized. Try 'generate experts', 'evaluate hybrid ai', 'evaluate changes <recent changes>', 'guide user | intentions | questions', or 'retrieve memory'."
 
 # Main Execution with Interactive Prompt
 if __name__ == "__main__":
-    print("Initializing AI Simulation with Strategy Facilitation, Validation, and Visualization...")
+    print("Initializing AI System with Guidance Experts, Hybrid AI Evaluation, Layered Memory, Meta-Programming, and Expert Facilitation...")
 
     # Initialize components
     kb = KnowledgeBase()
@@ -256,11 +241,11 @@ if __name__ == "__main__":
     print("Prometheus metrics available at http://localhost:8000")
 
     # Interactive loop
-    print("\nCommands: 'generate experts, num_experts, expertise_area1, expertise_area2,...', 'facilitate strategy <task description>'")
+    print("\nCommands: 'generate experts, num_experts, expertise_area1, ...', 'evaluate hybrid ai', 'evaluate changes <recent changes>', 'guide user | intentions | questions', 'retrieve memory'")
     while True:
         user_input = input("\nEnter your command: ").strip().lower()
         if user_input in ["exit", "quit"]:
-            print("Exiting simulation. Goodbye!")
+            print("Exiting system. Goodbye!")
             break
         response = integration.process_input(user_input)
         print(response)
