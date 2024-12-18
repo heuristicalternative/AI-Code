@@ -1,11 +1,14 @@
 import matplotlib.pyplot as plt
 import networkx as nx
+from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import SentenceTransformer
 from collections import defaultdict
 import threading
 import traceback
+import numpy as np
 
 class EnhancedAIObserver:
-    """Enhanced AI Observer with dynamic thread retrieval, learning integration, and scalability improvements."""
+    """Enhanced AI Observer with advanced clustering, dependency mapping, and scalability improvements."""
     def __init__(self):
         self.thread_contexts = {}
         self.observed_ais = {}
@@ -14,6 +17,7 @@ class EnhancedAIObserver:
         self.recursive_analysis_logs = []
         self.dynamic_intentionality = defaultdict(int)
         self.dynamic_experts = []  # Track dynamically created experts
+        self.model = SentenceTransformer('all-MiniLM-L6-v2')  # For semantic intent clustering
 
     def ingest_thread_entry(self, entry):
         """Ingests a single conversation entry dynamically with self-healing."""
@@ -27,178 +31,139 @@ class EnhancedAIObserver:
             print(f"[Error] Failed to ingest thread entry: {entry}. Error: {e}")
             traceback.print_exc()
 
-    def observe_ai_system(self, ai_id, ai_description, capabilities):
-        """Observes and categorizes a new AI system."""
+    def semantic_intent_clustering(self):
+        """Clusters similar intents across all threads using semantic similarity."""
         try:
-            self.observed_ais[ai_id] = {
-                "description": ai_description,
-                "capabilities": capabilities,
-            }
-            print(f"[AI Observer] Observed AI system '{ai_id}' with capabilities: {capabilities}")
+            all_intents = []
+            thread_intents = {}
+            for thread_id, entries in self.thread_contexts.items():
+                thread_intents[thread_id] = [entry["intent"] for entry in entries if "intent" in entry]
+                all_intents.extend(thread_intents[thread_id])
+
+            embeddings = self.model.encode(all_intents)
+            similarity_matrix = cosine_similarity(embeddings)
+
+            clusters = defaultdict(list)
+            visited = set()
+
+            for i, intent in enumerate(all_intents):
+                if i in visited:
+                    continue
+                cluster_id = len(clusters)
+                clusters[cluster_id].append(intent)
+                visited.add(i)
+                for j in range(len(all_intents)):
+                    if j not in visited and similarity_matrix[i][j] > 0.8:  # Similarity threshold
+                        clusters[cluster_id].append(all_intents[j])
+                        visited.add(j)
+
+            print(f"[AI Observer] Identified {len(clusters)} semantic intent clusters.")
+            return clusters
         except Exception as e:
-            print(f"[Error] Failed to observe AI system '{ai_id}'. Error: {e}")
+            print(f"[Error] Failed to cluster intents. Error: {e}")
             traceback.print_exc()
 
-    def refine_pipeline(self, pipeline_id, tasks):
-        """Refines or creates a dynamic pipeline."""
+    def dependency_mapping(self, pipeline_id):
+        """Identifies dependencies between tasks in a pipeline and historical threads."""
         try:
-            self.dynamic_pipelines[pipeline_id] = {
-                "tasks": tasks,
-                "status": "Refined",
-            }
-            print(f"[AI Observer] Refined pipeline '{pipeline_id}': {tasks}")
+            dependencies = []
+            tasks = self.dynamic_pipelines[pipeline_id]["tasks"]
+            for task in tasks:
+                for thread_id, entries in self.thread_contexts.items():
+                    for entry in entries:
+                        if task in entry.get("content", ""):
+                            dependencies.append((task, entry.get("intent", "Unknown")))
+
+            print(f"[AI Observer] Identified dependencies: {dependencies}")
+            return dependencies
         except Exception as e:
-            print(f"[Error] Failed to refine pipeline '{pipeline_id}'. Error: {e}")
+            print(f"[Error] Failed to map dependencies for pipeline '{pipeline_id}'. Error: {e}")
             traceback.print_exc()
 
-    def allocate_resources(self, pipeline_id):
-        """Dynamically allocates resources to a pipeline based on workload."""
+    def forecast_high_priority_intents(self):
+        """Forecasts high-priority intents based on trends in dynamic intentionality."""
         try:
-            workload = len(self.dynamic_pipelines[pipeline_id]["tasks"])
-            resources = max(1, min(workload // 2, 10))  # Example allocation logic
-            print(f"[AI Observer] Allocated {resources} resource units to pipeline '{pipeline_id}'.")
-            return resources
+            trend_data = sorted(self.dynamic_intentionality.items(), key=lambda x: x[1], reverse=True)
+            high_priority = [intent for intent, count in trend_data[:5]]  # Top 5 trends
+            print(f"[AI Observer] Forecasted high-priority intents: {high_priority}")
+            return high_priority
         except Exception as e:
-            print(f"[Error] Failed to allocate resources for pipeline '{pipeline_id}'. Error: {e}")
+            print(f"[Error] Failed to forecast high-priority intents. Error: {e}")
             traceback.print_exc()
 
-    def execute_experts_concurrently(self):
-        """Runs all dynamic experts concurrently."""
+    def expert_collaboration(self):
+        """Simulates collaboration between scalability and modular design experts."""
         try:
-            threads = []
-            for expert in self.dynamic_experts:
-                thread = threading.Thread(target=self.execute_expert_tasks, args=(expert,))
-                threads.append(thread)
-                thread.start()
-            for thread in threads:
-                thread.join()
+            scalability_expert = next((exp for exp in self.dynamic_experts if "Optimize scalability" in exp["capabilities"]), None)
+            modular_design_expert = next((exp for exp in self.dynamic_experts if "Refine modular design" in exp["capabilities"]), None)
+
+            if scalability_expert and modular_design_expert:
+                print(f"[AI Observer] Collaboration between '{scalability_expert['name']}' and '{modular_design_expert['name']}'.")
+                combined_focus = "Joint optimization of scalability and modular design."
+                print(f"[AI Observer] Collaborative focus: {combined_focus}")
+            else:
+                print(f"[AI Observer] Experts required for collaboration are missing.")
         except Exception as e:
-            print(f"[Error] Failed to execute experts concurrently. Error: {e}")
+            print(f"[Error] Failed to simulate expert collaboration. Error: {e}")
             traceback.print_exc()
 
-    def execute_expert_tasks(self, expert):
-        """Simulates execution of tasks by an expert."""
+    def advanced_visualizations(self):
+        """Generates temporal trends in dynamic intentionality and highlights critical shifts."""
         try:
-            for capability in expert["capabilities"]:
-                print(f"[AI Observer] Expert '{expert['name']}' is processing: {capability}")
-        except Exception as e:
-            print(f"[Error] Failed to execute tasks for expert '{expert['name']}'. Error: {e}")
-            traceback.print_exc()
-
-    def retrieve_historical_threads(self):
-        """Simulates retrieval of historical threads from the OpenAI account."""
-        try:
-            simulated_threads = {
-                "thread_1": [
-                    {"intent": "recursive learning", "content": "Iterative refinement systems."},
-                    {"intent": "dynamic Oracles", "content": "Build AI Oracles for predictive tasks."},
-                ],
-                "thread_2": [
-                    {"intent": "meta-mapping", "content": "Develop inter-thread mappings."},
-                    {"intent": "pipeline optimization", "content": "Enhance task pipelines dynamically."},
-                ],
-                "thread_3": [
-                    {"intent": "adaptive systems", "content": "Create systems that self-optimize."},
-                    {"intent": "task orchestration", "content": "Orchestrate multi-agent workflows."},
-                ],
-            }
-            print(f"[AI Observer] Retrieved {len(simulated_threads)} historical threads.")
-            return simulated_threads
-        except Exception as e:
-            print(f"[Error] Failed to retrieve historical threads. Error: {e}")
-            traceback.print_exc()
-            return {}
-
-    def enable_cross_thread_learning(self, previous_threads=None):
-        """Learns from retrieved threads or provided threads dynamically."""
-        try:
-            if previous_threads is None:
-                previous_threads = self.retrieve_historical_threads()
-            
-            for thread_id, data in previous_threads.items():
-                self.thread_contexts[thread_id] = data
-                for entry in data:
-                    intent = entry.get("intent")
-                    if intent:
-                        self.dynamic_intentionality[intent] += 1
-            print(f"[AI Observer] Cross-thread learning enabled with {len(previous_threads)} threads.")
-        except Exception as e:
-            print(f"[Error] Failed to enable cross-thread learning. Error: {e}")
-            traceback.print_exc()
-
-    def generate_actionable_meta_mapping(self):
-        """Generates actionable meta-mappings between observed systems and threads."""
-        try:
-            mappings = {}
-            for ai_id, ai_data in self.observed_ais.items():
-                mappings[ai_id] = {
-                    "related_intents": [
-                        intent for intent in self.dynamic_intentionality if intent in ai_data["capabilities"]
-                    ],
-                    "potential_tasks": [f"Enhance {cap}" for cap in ai_data["capabilities"]],
-                }
-            self.meta_mapping_logs.append(mappings)
-            return mappings
-        except Exception as e:
-            print(f"[Error] Failed to generate meta-mappings. Error: {e}")
-            traceback.print_exc()
-
-    def recursive_self_analysis(self):
-        """Analyzes and refines the observer's internal processes with self-healing."""
-        try:
-            self.recursive_analysis_logs.append("Running recursive self-analysis...")
-            insights = self.generate_actionable_meta_mapping()
-            self.recursive_analysis_logs.append(f"Recursive insights: {insights}")
-            return insights
-        except Exception as e:
-            print(f"[Error] Recursive self-analysis failed. Error: {e}")
-            traceback.print_exc()
-
-    def visualize_meta_mappings(self):
-        """Visualizes the meta-mappings and AI relationships."""
-        try:
-            G = nx.DiGraph()
-            for ai_id, data in self.meta_mapping_logs[-1].items():
-                G.add_node(ai_id, label="AI System")
-                for intent in data["related_intents"]:
-                    G.add_node(intent, label="Intent")
-                    G.add_edge(intent, ai_id)
-
-            plt.figure(figsize=(10, 8))
-            nx.draw(G, with_labels=True, node_color="lightblue", edge_color="gray")
-            plt.title("Meta-Mapping Visualization")
+            intents, counts = zip(*sorted(self.dynamic_intentionality.items(), key=lambda x: x[1]))
+            plt.figure(figsize=(12, 6))
+            plt.plot(intents, counts, marker="o")
+            plt.title("Temporal Trends in Dynamic Intentionality")
+            plt.xlabel("Intents")
+            plt.ylabel("Frequency")
+            plt.xticks(rotation=45, ha="right")
+            plt.tight_layout()
             plt.show()
         except Exception as e:
-            print(f"[Error] Visualization failed. Error: {e}")
+            print(f"[Error] Failed to generate advanced visualizations. Error: {e}")
             traceback.print_exc()
 
-    def create_dynamic_expert(self, name, capabilities):
-        """Creates a dynamic AI expert to address identified gaps."""
+    def feedback_loop_optimization(self):
+        """Refines recursive self-analysis to prioritize recurring insights and adapt resources."""
         try:
-            expert = {"name": name, "capabilities": capabilities, "status": "Active"}
-            self.dynamic_experts.append(expert)
-            print(f"[AI Observer] Created dynamic expert '{name}' with capabilities: {capabilities}")
-            return expert
+            recurring_insights = sorted(self.dynamic_intentionality.items(), key=lambda x: x[1], reverse=True)
+            top_recurring = recurring_insights[:3]  # Focus on top 3 recurring insights
+            print(f"[AI Observer] Optimized feedback loop. Top recurring insights: {top_recurring}")
+            return top_recurring
         except Exception as e:
-            print(f"[Error] Failed to create dynamic expert '{name}'. Error: {e}")
+            print(f"[Error] Failed to optimize feedback loop. Error: {e}")
             traceback.print_exc()
 
-# Enhanced Execution with Cross-Thread Learning and Dynamic Expert Integration
-def enhanced_scalability_execution(observer):
-    """Enhanced execution loop focusing on scalability."""
+# Enhanced Execution with Cross-Thread Learning and Advanced Features
+
+def enhanced_advanced_execution(observer):
+    """Enhanced execution loop with advanced clustering, dependency mapping, and more."""
     observer.enable_cross_thread_learning()
 
-    # Refine pipelines and allocate resources dynamically
+    # Semantic intent clustering
+    clusters = observer.semantic_intent_clustering()
+
+    # Refine pipelines and map dependencies
     pipeline_id = "Pipeline_6"
     observer.refine_pipeline(pipeline_id, ["Task 1", "Task 2", "Task 3", "Task 4"])
-    observer.allocate_resources(pipeline_id)
+    dependencies = observer.dependency_mapping(pipeline_id)
+
+    # Forecast high-priority intents
+    high_priority = observer.forecast_high_priority_intents()
 
     # Deploy dynamic experts
-    observer.create_dynamic_expert("ScalabilityExpert", ["Optimize scalability", "Refine modular design"])
+    observer.create_dynamic_expert("ScalabilityExpert", ["Optimize scalability"])
+    observer.create_dynamic_expert("ModularDesignExpert", ["Refine modular design"])
 
-    # Execute experts in parallel
-    observer.execute_experts_concurrently()
+    # Simulate expert collaboration
+    observer.expert_collaboration()
+
+    # Advanced visualizations
+    observer.advanced_visualizations()
+
+    # Feedback loop optimization
+    optimized_feedback = observer.feedback_loop_optimization()
 
 # Initialize the observer and run the enhanced execution loop
 observer = EnhancedAIObserver()
-enhanced_scalability_execution(observer)
+enhanced_advanced_execution(observer)
