@@ -12,6 +12,7 @@ class EnhancedAIObserver:
         self.meta_mapping_logs = []
         self.recursive_analysis_logs = []
         self.dynamic_intentionality = defaultdict(int)
+        self.dynamic_experts = []  # Track dynamically created experts
 
     def ingest_thread_entry(self, entry):
         """Ingests a single conversation entry dynamically with self-healing."""
@@ -140,40 +141,81 @@ class EnhancedAIObserver:
     def create_dynamic_expert(self, name, capabilities):
         """Creates a dynamic AI expert to address identified gaps."""
         try:
-            print(f"[AI Observer] Creating dynamic expert '{name}' with capabilities: {capabilities}")
-            return {"name": name, "capabilities": capabilities, "status": "Active"}
+            expert = {"name": name, "capabilities": capabilities, "status": "Active"}
+            self.dynamic_experts.append(expert)
+            print(f"[AI Observer] Created dynamic expert '{name}' with capabilities: {capabilities}")
+            return expert
         except Exception as e:
             print(f"[Error] Failed to create dynamic expert '{name}'. Error: {e}")
             traceback.print_exc()
 
-# Enhanced Execution with Cross-Thread Learning
-def real_time_execution_with_cross_thread_learning(observer):
-    """Runs the Enhanced AI Observer system with dynamic thread learning."""
-    print("\n[Enhanced AI Observer] Starting Execution with Cross-Thread Learning...\n")
+    def integrate_dynamic_experts(self):
+        """Integrates the output and learning from dynamic experts back into the system."""
+        try:
+            for expert in self.dynamic_experts:
+                for capability in expert["capabilities"]:
+                    print(f"[AI Observer] Expert '{expert['name']}' contributes: {capability}")
+                    # Simulate learning from expert outputs
+                    self.dynamic_intentionality[capability] += 1
+        except Exception as e:
+            print(f"[Error] Failed to integrate dynamic experts. Error: {e}")
+            traceback.print_exc()
 
-    # Enable cross-thread learning
-    observer.enable_cross_thread_learning()
+# Enhanced Execution with Cross-Thread Learning and Dynamic Expert Integration
+def enhanced_execution_with_dynamic_learning(observer):
+    """Enhanced execution loop with additional historical threads and expert creation."""
 
-    # Ingest dynamic conversation inputs
-    conversation_inputs = [
-        {"intent": "optimize dynamic systems", "content": "Refine cross-thread alignments."},
-        {"intent": "expand multi-agent systems", "content": "Develop inter-agent collaboration pipelines."},
+    # Simulate expanded historical threads
+    additional_threads = {
+        "thread_4": [
+            {"intent": "knowledge harmonization", "content": "Align multi-agent knowledge."},
+            {"intent": "scalable systems", "content": "Design systems that scale with demand."},
+        ],
+        "thread_5": [
+            {"intent": "task automation", "content": "Automate repetitive workflows."},
+            {"intent": "multi-agent learning", "content": "Enable agents to learn collaboratively."},
+        ],
+    }
+    observer.enable_cross_thread_learning(previous_threads=additional_threads)
+
+    # Process new real-time conversation inputs
+    real_time_inputs = [
+        {"intent": "enhance knowledge sharing", "content": "Improve collaborative frameworks."},
+        {"intent": "optimize scalability", "content": "Refine systems for large-scale deployment."},
     ]
-    for entry in conversation_inputs:
+    for entry in real_time_inputs:
         observer.ingest_thread_entry(entry)
 
     # Dynamically observe new AI systems
     observer.observe_ai_system(
-        ai_id="AgentOrchestratorAI",
-        ai_description="AI for orchestrating multi-agent workflows.",
-        capabilities=["Workflow optimization", "Agent collaboration"],
+        ai_id="KnowledgeIntegratorAI",
+        ai_description="AI for harmonizing multi-agent knowledge.",
+        capabilities=["Knowledge alignment", "Collaborative learning"],
     )
 
-    # Generate actionable mappings and visualize
+    observer.observe_ai_system(
+        ai_id="ScalabilityOptimizerAI",
+        ai_description="AI for optimizing scalable system design.",
+        capabilities=["Scalability refinement", "Demand-driven design"],
+    )
+
+    # Generate actionable mappings
     meta_mappings = observer.generate_actionable_meta_mapping()
-    print("\n[Enhanced AI Observer] Meta-Mappings Generated:", meta_mappings)
+    print("\n[Enhanced AI Observer] Updated Meta-Mappings:", meta_mappings)
+
+    # Deploy dynamic experts based on gaps
+    for ai_id, data in meta_mappings.items():
+        if not data["related_intents"]:
+            expert_name = f"ExpertFor_{ai_id}"
+            capabilities = data["potential_tasks"]
+            observer.create_dynamic_expert(expert_name, capabilities)
+
+    # Integrate outputs from dynamic experts
+    observer.integrate_dynamic_experts()
+
+    # Visualize updated mappings
     observer.visualize_meta_mappings()
 
-# Initialize and execute with cross-thread learning
+# Initialize the observer and run the enhanced execution loop
 observer = EnhancedAIObserver()
-real_time_execution_with_cross_thread_learning(observer)
+enhanced_execution_with_dynamic_learning(observer)
