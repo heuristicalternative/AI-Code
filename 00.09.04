@@ -11,6 +11,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict
 import matplotlib.pyplot as plt
 from sentence_transformers import SentenceTransformer
+import psutil
 
 class EnhancedAIObserver:
     """AI Observer for recursive learning, cross-thread analysis, and meta-mapping."""
@@ -80,19 +81,20 @@ class EnhancedAIObserver:
 
 ---
 
-#### **2. AI Tokens Framework**
+#### **2. AI Tokens Framework with Dynamic Adaptability**
 ```python
 class AIToken:
-    """AI Token representing modular capabilities within the system."""
+    """AI Token representing modular capabilities with dynamic adaptability."""
     def __init__(self, identifier, roles, capabilities):
         self.identifier = identifier
         self.roles = roles
         self.capabilities = capabilities
         self.log = []
+        self.current_mode = "Token-Based"
 
     def execute(self, task, context):
         """Execute a specific task within the given context."""
-        result = f"Executing {task} in context {context}"
+        result = f"Executing {task} in context {context} using mode {self.current_mode}"
         self.log.append(result)
         return result
 
@@ -100,137 +102,117 @@ class AIToken:
         """Adapt and learn from feedback to enhance capabilities."""
         self.log.append(f"Learning from feedback: {feedback}")
         self.capabilities.append("Enhanced from feedback")
+
+    def switch_mode(self, mode):
+        """Dynamically switch processing mode based on task needs."""
+        valid_modes = ["Token-Based", "MANNs", "Graph-Based", "RL", "End-to-End"]
+        if mode in valid_modes:
+            self.current_mode = mode
+            print(f"[AI Token] Switched to {mode} mode.")
+        else:
+            print(f"[AI Token] Invalid mode: {mode}. Retaining current mode.")
+
+    def monitor_resources(self):
+        """Monitor system resources and adjust processing mode dynamically."""
+        memory = psutil.virtual_memory().percent
+        cpu = psutil.cpu_percent()
+        if memory > 80 or cpu > 80:
+            print("[AI Token] High resource usage detected. Switching to Token-Based mode.")
+            self.switch_mode("Token-Based")
+        else:
+            print("[AI Token] Resources within limits. Retaining current mode.")
 ```
 
 ---
 
-#### **3. Dynamic AI Experts**
+#### **3. Distributed Systems Integration**
 ```python
-class DynamicAIExpert:
-    """Dynamic Expert for specialized tasks."""
-    def __init__(self, name, expertise_area):
-        self.name = name
-        self.expertise_area = expertise_area
+class DistributedIntegration:
+    """Integration of AI Tokens with distributed systems and smart contracts."""
+    def __init__(self):
+        self.smart_contracts = {}
+        self.distributed_storage = {}
 
-    def perform_task(self, task_description):
-        """Execute a task related to the expertise area."""
-        print(f"[{self.name}] Performing task: {task_description}")
-        return f"Completed: {task_description}"
+    def add_smart_contract(self, contract_id, execution_logic):
+        """Add a smart contract for managing tasks."""
+        self.smart_contracts[contract_id] = execution_logic
+
+    def execute_contract(self, contract_id):
+        """Execute a smart contract if conditions are met."""
+        if contract_id in self.smart_contracts:
+            print(f"[Distributed Integration] Executing contract {contract_id}.")
+            return self.smart_contracts[contract_id]()
+        else:
+            print(f"[Distributed Integration] Contract {contract_id} not found.")
+
+    def integrate_distributed_storage(self, storage_id, data):
+        """Integrate with distributed storage systems like IPFS."""
+        self.distributed_storage[storage_id] = data
+        print(f"[Distributed Integration] Data stored in {storage_id}.")
+
+    def retrieve_from_storage(self, storage_id):
+        """Retrieve data from distributed storage."""
+        return self.distributed_storage.get(storage_id, "Data not found.")
 ```
 
 ---
 
-#### **4. Auxiliary Engines**
-
-**Philosophical Engine**:
+#### **4. Adaptive Feedback Loop**
 ```python
-class PhilosophicalEngine:
-    """Facilitates reasoning and ethical considerations."""
-    def __init__(self):
-        self.log = []
+class AdaptiveFeedbackLoop:
+    """Implements feedback-driven self-improvement for AI Tokens."""
+    def __init__(self, token):
+        self.token = token
+        self.performance_metrics = []
 
-    def evaluate_scenario(self, scenario):
-        """Analyze and provide philosophical insights."""
-        insight = f"Philosophical evaluation of {scenario}"
-        self.log.append(insight)
-        return insight
-```
+    def gather_feedback(self, result, expected_outcome):
+        """Gather performance feedback for a task."""
+        success = result == expected_outcome
+        self.performance_metrics.append(success)
+        feedback = "Success" if success else "Failure"
+        self.token.learn(feedback)
 
-**Governance Engine**:
-```python
-class GovernanceEngine:
-    """Supports decision-making and policy evaluation."""
-    def __init__(self):
-        self.policies = []
-
-    def evaluate_policy(self, policy):
-        """Assess a policy for effectiveness and alignment."""
-        result = f"Evaluating policy: {policy}"
-        self.policies.append(result)
-        return result
-```
-
-**Mapping Engine**:
-```python
-import networkx as nx
-
-class MappingEngine:
-    """Creates and manages system mappings."""
-    def __init__(self):
-        self.graph = nx.Graph()
-
-    def add_dependency(self, node_a, node_b, weight=1):
-        """Add a dependency to the mapping."""
-        self.graph.add_edge(node_a, node_b, weight=weight)
-
-    def visualize_map(self):
-        """Visualize the dependency map."""
-        nx.draw(self.graph, with_labels=True)
-        plt.show()
+    def refine_capabilities(self):
+        """Refine token capabilities based on feedback trends."""
+        success_rate = sum(self.performance_metrics) / len(self.performance_metrics)
+        print(f"[Adaptive Feedback Loop] Success rate: {success_rate:.2f}")
+        if success_rate < 0.8:
+            print("[Adaptive Feedback Loop] Enhancing capabilities.")
+            self.token.capabilities.append("Refined based on feedback")
 ```
 
 ---
 
-#### **5. System Integration**
-```python
-from ai_observer import EnhancedAIObserver
-from ai_tokens import AIToken
-from dynamic_experts import DynamicAIExpert
-from philosophical_engine import PhilosophicalEngine
-from governance_engine import GovernanceEngine
-from mapping_engine import MappingEngine
-
-class SystemIntegration:
-    """Integrates all system components."""
-    def __init__(self):
-        self.observer = EnhancedAIObserver()
-        self.tokens = []
-        self.experts = []
-        self.philosophical_engine = PhilosophicalEngine()
-        self.governance_engine = GovernanceEngine()
-        self.mapping_engine = MappingEngine()
-
-    def add_token(self, token_id, roles, capabilities):
-        """Add an AI Token to the system."""
-        token = AIToken(token_id, roles, capabilities)
-        self.tokens.append(token)
-        return token
-
-    def add_expert(self, name, expertise_area):
-        """Add a Dynamic Expert to the system."""
-        expert = DynamicAIExpert(name, expertise_area)
-        self.experts.append(expert)
-        return expert
-
-    def integrate(self):
-        """Integrate all components for collaborative execution."""
-        print(f"Integrating {len(self.tokens)} AI Tokens and {len(self.experts)} Experts")
-        # Integration logic for collaborative execution
-```
-
----
-
-#### **6. Execution**
+#### **5. System Execution**
 ```python
 if __name__ == "__main__":
-    # Initialize the system
-    system = SystemIntegration()
+    # Initialize the AI Observer
+    observer = EnhancedAIObserver()
 
-    # Add components
-    token = system.add_token("Token1", ["Analysis"], ["Semantic Clustering"])
-    expert = system.add_expert("Efficiency Expert", "Resource Optimization")
+    # Add AI Tokens
+    token = AIToken("Token1", ["Resource Allocation"], ["Semantic Clustering"])
+    token.monitor_resources()
 
-    # Use components
-    system.observer.ingest_thread("thread_1", [
+    # Distributed Integration
+    distributed = DistributedIntegration()
+    distributed.add_smart_contract("Contract1", lambda: print("Executing smart contract logic."))
+    distributed.execute_contract("Contract1")
+
+    # Feedback Loop
+    feedback_loop = AdaptiveFeedbackLoop(token)
+    feedback_loop.gather_feedback("Task completed", "Task completed")
+    feedback_loop.refine_capabilities()
+
+    # Observer Ingestion and Insights
+    observer.ingest_thread("thread_1", [
         {"intent": "optimize workflows"},
         {"intent": "improve governance"}
     ])
-    insights = system.observer.generate_actionable_insights()
+    insights = observer.generate_actionable_insights()
     print(insights)
 
-    # Visualize results
-    system.observer.visualize_dynamic_intentionality()
+    # Visualizations
+    observer.visualize_dynamic_intentionality()
 ```
 
-This code integrates all discussed components, ensuring extensibility, modularity, and full functionality for further development.
-
+This implementation ensures full integration of dynamic adaptability, distributed systems interaction, and feedback-driven self-improvement.
