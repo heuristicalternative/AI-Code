@@ -37,7 +37,6 @@ class EnhancedAIObserver:
         self.recursive_analysis_logs = []
         self.model = SentenceTransformer('all-MiniLM-L6-v2')  # Semantic similarity model
         self.ai_tokens = []  # To track AI Tokens and their interactions
-        self.meta_learning_logs = []
 
     def ingest_thread(self, thread_id, conversation_data):
         """Ingests a past thread for learning and contextual awareness."""
@@ -164,6 +163,44 @@ class EnhancedAIObserver:
         self.recursive_analysis_logs.append(f"Self-observation insights: {self_analyzed_insights}")
         return self_analyzed_insights
 
+    def enable_adaptive_processing(self):
+        """Enables dynamic adaptability of processing methods based on context and resources."""
+        print("[AI Observer] Enabling adaptive processing...")
+        for token in self.ai_tokens:
+            if token.context_requirements == "long-term memory":
+                token.switch_to_mann()
+            elif token.context_requirements == "complex relations":
+                token.switch_to_graph_model()
+            elif token.context_requirements == "decision-making":
+                token.switch_to_rl()
+            else:
+                token.switch_to_standard_processing()
+        print("[AI Observer] Adaptive processing enabled.")
+
+class AIToken:
+    """Enhanced AI Token with adaptive processing capabilities."""
+    def __init__(self, role):
+        self.role = role
+        self.context_requirements = "standard"
+        self.markers = defaultdict(list)
+        self.performance_metrics = {}
+
+    def switch_to_mann(self):
+        self.context_requirements = "long-term memory"
+        print(f"[AI Token] Switched to Memory-Augmented Neural Networks (MANNs) for {self.role}.")
+
+    def switch_to_graph_model(self):
+        self.context_requirements = "complex relations"
+        print(f"[AI Token] Switched to Graph-Based Model for {self.role}.")
+
+    def switch_to_rl(self):
+        self.context_requirements = "decision-making"
+        print(f"[AI Token] Switched to Reinforcement Learning (RL) for {self.role}.")
+
+    def switch_to_standard_processing(self):
+        self.context_requirements = "standard"
+        print(f"[AI Token] Using standard token-based processing for {self.role}.")
+
 # Dynamic AI Expert Class
 
 class DynamicAIExpert:
@@ -209,6 +246,9 @@ def run_advanced_observer_system():
 
     # Visualization of results
     observer.advanced_visualizations()
+
+    # Enable adaptive processing
+    observer.enable_adaptive_processing()
 
     # Self-observation
     self_observation_results = observer.run_self_observation()
