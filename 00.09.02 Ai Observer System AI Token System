@@ -1,5 +1,3 @@
-# Enhanced AI Observer System with Recursive Learning and Dynamic Expert Integration
-
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict
@@ -28,7 +26,7 @@ for package in required_packages:
     ensure_package_installed(package)
 
 class EnhancedAIObserver:
-    """AI Observer for recursive learning, dynamic expert creation, and intentionality alignment."""
+    """AI Observer for recursive learning, dynamic expert creation, intentionality alignment, and memory management."""
     def __init__(self):
         self.thread_contexts = {}
         self.dynamic_intentionality = []
@@ -37,6 +35,7 @@ class EnhancedAIObserver:
         self.recursive_analysis_logs = []
         self.model = SentenceTransformer('all-MiniLM-L6-v2')  # Semantic similarity model
         self.ai_tokens = []  # To track AI Tokens and their interactions
+        self.memory_nodes = defaultdict(dict)  # Persistent memory across systems
 
     def ingest_thread(self, thread_id, conversation_data):
         """Ingests a past thread for learning and contextual awareness."""
@@ -95,7 +94,7 @@ class EnhancedAIObserver:
         """Compares intentionalities across threads to assess alignment and divergences."""
         intent_vectors = []
         intents_list = list(set([intent for layer in self.dynamic_intentionality for intent in layer.keys()]))
-        
+       
         for layer in self.dynamic_intentionality:
             vector = [layer.get(intent, 0) for intent in intents_list]
             intent_vectors.append(vector)
@@ -163,6 +162,19 @@ class EnhancedAIObserver:
         self.recursive_analysis_logs.append(f"Self-observation insights: {self_analyzed_insights}")
         return self_analyzed_insights
 
+    def enable_memory_retrieval(self, context_id):
+        """Retrieve and refer to stored memory for dynamic continuation."""
+        if context_id in self.memory_nodes:
+            return self.memory_nodes[context_id]
+        else:
+            print(f"[AI Observer] Memory for context {context_id} not found.")
+            return None
+
+    def save_to_memory(self, context_id, data):
+        """Save specific data to memory for future cross-thread use."""
+        self.memory_nodes[context_id] = data
+        print(f"[AI Observer] Context {context_id} saved to memory.")
+
     def enable_adaptive_processing(self):
         """Enables dynamic adaptability of processing methods based on context and resources."""
         print("[AI Observer] Enabling adaptive processing...")
@@ -201,8 +213,6 @@ class AIToken:
         self.context_requirements = "standard"
         print(f"[AI Token] Using standard token-based processing for {self.role}.")
 
-# Dynamic AI Expert Class
-
 class DynamicAIExpert:
     """Dynamic AI Expert for specialized tasks."""
     def __init__(self, name, expertise_area):
@@ -214,7 +224,6 @@ class DynamicAIExpert:
         return f"Task result for {task_description}"
 
 # Main Execution
-
 def run_advanced_observer_system():
     """Run the enhanced AI Observer system."""
     observer = EnhancedAIObserver()
@@ -258,6 +267,14 @@ def run_advanced_observer_system():
     expert = observer.create_dynamic_expert("Resource Optimization")
     result = expert.perform_task("Optimize resource flows across threads")
     print(f"Dynamic Expert Result: {result}")
+
+    # Save final context to memory
+    observer.save_to_memory("final_context", {
+        "intentionality": combined_intentionality,
+        "milestones": milestones,
+        "insights": recommendations,
+        "self_observation": self_observation_results
+    })
 
 # Execute the enhanced system
 run_advanced_observer_system()
